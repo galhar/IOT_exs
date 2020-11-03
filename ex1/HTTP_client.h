@@ -5,6 +5,13 @@
 #ifndef IOT_EXS_HTTP_CLIENT_H
 #define IOT_EXS_HTTP_CLIENT_H
 
+#include "socket.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX_HTTP_RESPONSE_HEADER_LENGTH 8192
+#define HTTP_RESPONSE_TIMEOUT 1000
+
 /**
 Initializes the socket..
  * Host is the destination address as DNS: en8wtnrvtnkt5.x.pipedream.net, or as IPv4: 35.169.0.97.
