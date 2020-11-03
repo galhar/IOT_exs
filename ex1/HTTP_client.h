@@ -6,7 +6,7 @@
 #define IOT_EXS_HTTP_CLIENT_H
 
 /**
-Initializes the socket.
+Initializes the socket..
  * Host is the destination address as DNS: en8wtnrvtnkt5.x.pipedream.net, or as IPv4: 35.169.0.97.
  * Port the communication endpoint, as string, e.g.: “80”.
  * Returns 0 on success, -1 on failure. * @param host
