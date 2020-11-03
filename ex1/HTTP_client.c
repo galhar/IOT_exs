@@ -15,6 +15,7 @@ char *httpPOSTBody = "POST %s HTTP/1.1\r\n"
                      "Content-type: application/x-www-form-urlencoded\r\n"
                      "Content-length: %d\r\n\r\n"
                      "%s\r\n";
+char *httpResponseHeaderSuffix = "\r\n\r\n";
 
 int HTTPClientInit(char *host, char *port) {
     // save the host and port for internal usage
@@ -47,11 +48,29 @@ int HTTPClientSendHTTPGetDemoRequest(char *url, char *response, int response_max
     free(tmpGETMsg);
 
     // now read the return message, and parse out the content
+
     int HTTPResponseBufLen = MAX_HTTP_RESPONSE_HEADER_LENGTH + response_max_len;
     char *HTTPResponseBuf = malloc(HTTPResponseBufLen);
-    int readBytes = SocketRead(HTTPResponseBuf,HTTPResponseBufLen, HTTP_RESPONSE_TIMEOUT);
-    if(strstr())
+    int readBytes = SocketRead(HTTPResponseBuf, HTTPResponseBufLen, HTTP_RESPONSE_TIMEOUT);
+    // print for debugging
+    printf("HTTP RESPONSE got:\n%s\n", HTTPResponseBuf);
 
+    // get the beginning of the contetn
+    char *responseSuffix = strstr(HTTPResponseBuf, httpResponseHeaderSuffix);
+    if (responseSuffix == NULL) {
+        perror("HTTP get error: the response in bad format");
+        return ERROR;
+    }
+
+    // return min length between the string got and the defined max length
+    int responseLen = strlen(responseSuffix) - strlen(httpResponseHeaderSuffix);
+    if (response_max_len < responseLen) {
+        responseLen = response_max_len;
+    }
+    strncpy(response, responseSuffix + strlen(responseSuffix), responseLen);
+
+    free(HTTPResponseBuf);
+    return responseLen;
 }
 
 
