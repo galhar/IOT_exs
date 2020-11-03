@@ -4,7 +4,8 @@
 
 #ifndef IOT_EXS_SOCKET_H
 #define IOT_EXS_SOCKET_H
-
+#define ERROR -1
+#define SUCCESS 0
 /**
  * Initializes the socket.
  * Host is the destination address as DNS: en8wtnrvtnkt5.x.pipedream.net, or as IPv4: 35.169.0.97
