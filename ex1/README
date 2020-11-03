@@ -16,4 +16,6 @@ socket_linux.c -
 
 Remarks
 --------------
-
+In socket_linux.c most of the function are base function from sys/socket.h. the only complicated function
+is the init socket because we need to translate a hostname to IP address. we used the function gethostbyname
+to do so.
