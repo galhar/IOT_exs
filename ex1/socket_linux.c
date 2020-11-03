@@ -8,19 +8,18 @@ struct sockaddr_in address;
 
 
 int SocketInit(char *host, char *port) {
-    int server_fd;
     struct hostent* he;
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
         perror("socket failed");
-        return ERORR;
+        return ERROR;
     }
 
     /* resolve hostname */
-    if ( (he = gethostbyname(hostname) ) == NULL ) {
+    if ( (he = gethostbyname(host) ) == NULL ) {
         perror("can not translate HOST to IP");
-        return ERROR
+        return ERROR;
     }
 
     address.sin_family = AF_INET;
