@@ -49,7 +49,7 @@ int parseHttpResponse(char* response, int response_max_len){
     if (response_max_len < responseLen) {
         responseLen = response_max_len;
     }
-    strncpy(response, responseSuffix + strlen(responseSuffix), responseLen);
+    strncpy(response, responseSuffix + strlen(httpResponseHeaderSuffix), responseLen);
 
     free(httpResponseBuf);
 

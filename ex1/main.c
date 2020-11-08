@@ -17,12 +17,12 @@ int main(int argc, char *argv[]){
     }
     printf("main.c level get request:\n%s", buffer);
 
-    /*
+
     if(HTTPClientSendHTTPPostDemoRequest("/", POST_MESSAGE, MESSAGE_LEN, buffer, MAX_BUFFER) == ERROR) {
         return ERROR;
     }
     printf("main.c level post request:\n%s", buffer);
-*/
+
     HTTPClientDeinit();
     return SUCCESS;
 }
