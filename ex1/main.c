@@ -12,16 +12,31 @@ int main(int argc, char *argv[]){
         return ERROR;
     }
 
+    if(HTTPClientSendHTTPPostDemoRequest("/", POST_MESSAGE, MESSAGE_LEN, buffer, MAX_BUFFER) == ERROR) {
+        return ERROR;
+    }
+    printf("main.c level post 1 request:\n%s\n", buffer);
+
+    if(HTTPClientSendHTTPPostDemoRequest("/", POST_MESSAGE, MESSAGE_LEN, buffer, MAX_BUFFER) == ERROR) {
+        return ERROR;
+    }
+    printf("main.c level post 2 request:\n%s\n", buffer);
+
     if(HTTPClientSendHTTPGetDemoRequest("/", buffer, MAX_BUFFER) == ERROR) {
         return ERROR;
     }
-    printf("main.c level get request:\n%s", buffer);
+    printf("main.c level get 1 request:\n%s\n", buffer);
+
+    if(HTTPClientSendHTTPGetDemoRequest("/", buffer, MAX_BUFFER) == ERROR) {
+        return ERROR;
+    }
+    printf("main.c level get 2 request:\n%s\n", buffer);
 
 
     if(HTTPClientSendHTTPPostDemoRequest("/", POST_MESSAGE, MESSAGE_LEN, buffer, MAX_BUFFER) == ERROR) {
         return ERROR;
     }
-    printf("main.c level post request:\n%s", buffer);
+    printf("main.c level post 3 request:\n%s\n", buffer);
 
     HTTPClientDeinit();
     return SUCCESS;
