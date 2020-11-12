@@ -31,8 +31,8 @@
     extern "C" {
 #endif
 
-#include "wolfmqtt/mqtt_types.h"
-#include "wolfmqtt/mqtt_socket.h"
+#include "mqtt_types.h"
+#include "mqtt_socket.h"
 
 
 /* Size of a data length elements in protocol */

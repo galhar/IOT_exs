@@ -41,7 +41,7 @@
     extern "C" {
 #endif
 
-#include "wolfmqtt/visibility.h"
+#include "visibility.h"
 
 #ifdef _WIN32
     #define USE_WINDOWS_API
