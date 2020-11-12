@@ -34,7 +34,7 @@
 #if !defined(WOLFMQTT_USER_SETTINGS) && !defined(USE_WINDOWS_API)
     /* If options.h is missing use the "./configure" script. Otherwise, copy
      * the template "wolfmqtt/options.h.in" into "wolfmqtt/options.h" */
-    #include <options.h>
+    #include "options.h"
 #endif
 #include "mqtt_types.h"
 #include "mqtt_packet.h"
