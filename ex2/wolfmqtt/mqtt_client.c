@@ -24,7 +24,7 @@
     #include <config.h>
 #endif
 
-#include "wolfmqtt/mqtt_client.h"
+#include "mqtt_client.h"
 
 /* Options */
 //#define WOLFMQTT_DEBUG_CLIENT

@@ -32,8 +32,8 @@
     #include <errno.h>
 #endif
 
-#include "wolfmqtt/mqtt_client.h"
-#include "wolfmqtt/mqtt_socket.h"
+#include "mqtt_client.h"
+#include "mqtt_socket.h"
 
 /* Options */
 //#define WOLFMQTT_DEBUG_SOCKET
