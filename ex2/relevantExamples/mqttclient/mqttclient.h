@@ -22,7 +22,7 @@
 #ifndef WOLFMQTT_MQTTCLIENT_H
 #define WOLFMQTT_MQTTCLIENT_H
 
-#include "mqttexample.h"
+#include "../mqttexample.h"
 
 
 /* Exposed functions */

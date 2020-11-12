@@ -24,10 +24,10 @@
     #include <config.h>
 #endif
 
-#include "mqtt_client.h"
+#include "../../wolfmqtt/mqtt_client.h"
 
 #include "mqttclient.h"
-#include "mqttnet.h"
+#include "../mqttnet.h"
 
 /* Locals */
 static int mStopRead = 0;
