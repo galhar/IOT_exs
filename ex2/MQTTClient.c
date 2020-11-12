@@ -31,6 +31,7 @@ static int NetConnect(void *context, const char* host, word16 port, int timeout_
  */
 static int NetRead(void *context, byte* buf, int buf_len, int timeout_ms)
 {
+    SocketRead(buf, buf_len, timeout_ms);
 }
 
 /**
@@ -43,7 +44,7 @@ static int NetRead(void *context, byte* buf, int buf_len, int timeout_ms)
  * (one of MqttPacketResponseCodes, defined in wolfMQTT/wolfmqtt/mqtt_types.h).
  */
 static int NetWrite(void *context, const byte* buf, int buf_len, int timeout_ms) {
-
+    SocketWrite(buf, buf_len);
 }
 
 /**
@@ -54,7 +55,7 @@ static int NetWrite(void *context, const byte* buf, int buf_len, int timeout_ms)
  */
 static int NetDisconnect(void *context)
 {
-
+    SocketClose();
 }
 
 /**
@@ -66,7 +67,11 @@ static int NetDisconnect(void *context)
  * @return 0 on success, -1 on failure
  */
 int MqttClientNet_Init(MqttNet* net, MQTTCtx* mqttCtx) {
-
+    net->connect = NetConnect;
+    net->disconnect = NetDisconnect;
+    net->read = NetRead;
+    net->write = NetWrite;
+    return SUCCESS;
 }
 
 /**
@@ -75,5 +80,5 @@ int MqttClientNet_Init(MqttNet* net, MQTTCtx* mqttCtx) {
  * @return 0 on success, -1 on failure
  */
 int MqttClientNet_DeInit(MqttNet* net) {
-
+    return SUCCESS;
 }
