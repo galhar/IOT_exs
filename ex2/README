@@ -42,3 +42,9 @@ Files written by us:
 Remarks
 --------------
 Most of our work was to create the main.c and most of the code is there.
+The host and other features like qos, port, keep alive, cmd timeout,  connection 
+timeout, topic name, clientID.
+The buffer is set to be 100 bytes size.
+The function mqtt_message_cb is there for possible future use. We could set it to
+do nothing and nothing in our actions would have changed. It's in case we will 
+want to subscribe as well.
