@@ -4,7 +4,7 @@
 
 #ifndef EX1_MQTTCLIENT_H
 #define EX1_MQTTCLIENT_H
-#include "relevantExamples/mqttexample.h"
+#include "wolfmqtt/mqttexample.h"
 #include "wolfmqtt/mqtt_types.h"
 #include "wolfmqtt/mqtt_socket.h"
 /**

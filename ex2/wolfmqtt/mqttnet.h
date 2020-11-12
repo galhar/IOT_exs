@@ -26,7 +26,7 @@
     extern "C" {
 #endif
 
-#include "examples/mqttexample.h"
+#include "mqttexample.h"
 
 /* Default MQTT host broker to use, when none is specified in the examples */
 #ifndef DEFAULT_MQTT_HOST
