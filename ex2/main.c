@@ -3,6 +3,7 @@
 //
 #include "MQTTClient.h"
 #include <time.h>
+#include <stdio.h>
 
 #define DEFAULT_MQTT_HOST "broker.mqttdashboard.com"
 #define DEFAULT_MQTT_PORT 1883
@@ -17,26 +18,23 @@
 #define MAX_BUFFER_SIZE 100
 #define PRINT_BUFFER_SIZE 100
 
-#define DEFAULT_PAYLOAD "{"
-"“Student1ID\":\"208296822\""
-"“Student1ID\":\"<student-1-id>\""
-"“Student1Name\":\"<student-1-name>\","
-"“Student1Name\":\"<student-1-name>\","
-"“CurrentTimeUTC\":<seconds-since-epoch>}"
+char *payloadTemplate = "{\n\"Student1ID\":\"208296822\",\n"
+                              "\"Student2ID\":\"211760863\",\n"
+                              "\"Student1Name\":\"Gal Harari\",\n"
+                              "\"Student2Name\":\"Amit Dovner\",\n"
+                              "\"CurrentTimeUTC\":%ld\n}";
 
-static const char* kDefTopicName = DEFAULT_TOPIC_NAME;
-static const char* kDefClientId =  DEFAULT_CLIENT_ID;
+static const char *kDefTopicName = DEFAULT_TOPIC_NAME;
+static const char *kDefClientId = DEFAULT_CLIENT_ID;
 
 static volatile word16 mPacketIdLast;
 
-int mqtt_tls_cb(MqttClient* client)
-{
-    (void)client;
+int mqtt_tls_cb(MqttClient *client) {
+    (void) client;
     return 0;
 }
 
-word16 mqtt_get_packetid(void)
-{
+word16 mqtt_get_packetid(void) {
     /* Check rollover */
     if (mPacketIdLast >= MAX_PACKET_ID) {
         mPacketIdLast = 0;
@@ -45,8 +43,7 @@ word16 mqtt_get_packetid(void)
     return ++mPacketIdLast;
 }
 
-void mqtt_init_ctx(MQTTCtx* mqttCtx)
-{
+int mqtt_init_ctx(MQTTCtx *mqttCtx) {
     XMEMSET(mqttCtx, 0, sizeof(MQTTCtx));
     mqttCtx->host = DEFAULT_MQTT_HOST;
     mqttCtx->port = DEFAULT_MQTT_PORT;
@@ -56,17 +53,35 @@ void mqtt_init_ctx(MQTTCtx* mqttCtx)
     mqttCtx->client_id = kDefClientId;
     mqttCtx->topic_name = kDefTopicName;
     mqttCtx->cmd_timeout_ms = DEFAULT_CMD_TIMEOUT_MS;
-    mqttCtx->message = DEFAULT_PAYLOAD
+
+    char* messagePayload;
+    if(0 > asprintf(&messagePayload, payloadTemplate, time(NULL))){
+        perror("mqtt_init_ctx ERROR: during initializing of the payload message");
+        return EXIT_FAILURE;
+    }
+    mqttCtx->message = messagePayload;
+
+    return MQTT_CODE_SUCCESS;
+}
+
+void mqtt_free_ctx(MQTTCtx* mqttCtx)
+{
+    if (mqttCtx == NULL) {
+        return;
+    }
+
+    if (mqttCtx->message){
+        free(mqttCtx->message);
+    }
 }
 
 static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
-                           byte msg_new, byte msg_done)
-{
-    byte buf[PRINT_BUFFER_SIZE+1];
+                           byte msg_new, byte msg_done) {
+    byte buf[PRINT_BUFFER_SIZE + 1];
     word32 len;
-    MQTTCtx* mqttCtx = (MQTTCtx*)client->ctx;
+    MQTTCtx *mqttCtx = (MQTTCtx *) client->ctx;
 
-    (void)mqttCtx;
+    (void) mqttCtx;
 
     if (msg_new) {
         /* Determine min size to dump */
@@ -101,8 +116,7 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
     return MQTT_CODE_SUCCESS;
 }
 
-int mqttclient_test(MQTTCtx *mqttCtx)
-{
+int mqttclient_test(MQTTCtx *mqttCtx) {
     int rc = MQTT_CODE_SUCCESS, i;
 
     PRINTF("MQTT Client: QoS %d, Use TLS %d", mqttCtx->qos,
@@ -117,8 +131,8 @@ int mqttclient_test(MQTTCtx *mqttCtx)
     }
 
     /* setup tx/rx buffers */
-    mqttCtx->tx_buf = (byte*)WOLFMQTT_MALLOC(MAX_BUFFER_SIZE);
-    mqttCtx->rx_buf = (byte*)WOLFMQTT_MALLOC(MAX_BUFFER_SIZE);
+    mqttCtx->tx_buf = (byte *) WOLFMQTT_MALLOC(MAX_BUFFER_SIZE);
+    mqttCtx->rx_buf = (byte *) WOLFMQTT_MALLOC(MAX_BUFFER_SIZE);
 
     /* Initialize MqttClient structure */
     rc = MqttClient_Init(&mqttCtx->client, &mqttCtx->net,
@@ -154,20 +168,6 @@ int mqttclient_test(MQTTCtx *mqttCtx)
     mqttCtx->connect.clean_session = mqttCtx->clean_session;
     mqttCtx->connect.client_id = mqttCtx->client_id;
 
-    /* Last will and testament sent by broker to subscribers
-        of topic when broker connection is lost */
-    XMEMSET(&mqttCtx->lwt_msg, 0, sizeof(mqttCtx->lwt_msg));
-    mqttCtx->connect.lwt_msg = &mqttCtx->lwt_msg;
-    mqttCtx->connect.enable_lwt = mqttCtx->enable_lwt;
-    if (mqttCtx->enable_lwt) {
-        /* Send client id in LWT payload */
-        mqttCtx->lwt_msg.qos = mqttCtx->qos;
-        mqttCtx->lwt_msg.retain = 0;
-        mqttCtx->lwt_msg.topic_name = "lwttopic";
-        mqttCtx->lwt_msg.buffer = (byte*)mqttCtx->client_id;
-        mqttCtx->lwt_msg.total_len = (word16)XSTRLEN(mqttCtx->client_id);
-
-    }
 
     /* Send Connect and wait for Connect Ack */
     rc = MqttClient_Connect(&mqttCtx->client, &mqttCtx->connect);
@@ -188,8 +188,8 @@ int mqttclient_test(MQTTCtx *mqttCtx)
     );
 
     /* Print the acquired client ID */
-        PRINTF("MQTT Connect Ack: Assigned Client ID: %s",
-                mqttCtx->client_id);
+    PRINTF("MQTT Connect Ack: Assigned Client ID: %s",
+           mqttCtx->client_id);
 
     /* Build list of topics */
     XMEMSET(&mqttCtx->subscribe, 0, sizeof(MqttSubscribe));
@@ -206,8 +206,8 @@ int mqttclient_test(MQTTCtx *mqttCtx)
     mqttCtx->publish.duplicate = 0;
     mqttCtx->publish.topic_name = mqttCtx->topic_name;
     mqttCtx->publish.packet_id = mqtt_get_packetid();
-    mqttCtx->publish.buffer = (byte*)mqttCtx->message;
-    mqttCtx->publish.total_len = (word16)XSTRLEN(mqttCtx->message);
+    mqttCtx->publish.buffer = (byte *) mqttCtx->message;
+    mqttCtx->publish.total_len = (word16) XSTRLEN(mqttCtx->message);
 
 
     rc = MqttClient_Publish(&mqttCtx->client, &mqttCtx->publish);
@@ -219,11 +219,6 @@ int mqttclient_test(MQTTCtx *mqttCtx)
         goto disconn;
     }
 
-
-    /* Check for error */
-    if (rc != MQTT_CODE_SUCCESS) {
-        goto disconn;
-    }
 
     disconn:
     /* Disconnect */
@@ -262,11 +257,18 @@ int main(int argc, char *argv[]) {
     MQTTCtx mqttCtx;
 
     /* init defaults */
-    mqtt_init_ctx(&mqttCtx);
+    rc = mqtt_init_ctx(&mqttCtx);
+    if (rc != MQTT_CODE_SUCCESS) {
+        goto exit;
+    }
+
     mqttCtx.app_name = "mqttclient";
-    mqttCtx.message = DEFAULT_MESSAGE;
+    //mqttCtx.message = DEFAULT_MESSAGE;
 
     rc = mqttclient_test(&mqttCtx);
+
+    exit:
+    mqtt_free_ctx(&mqttCtx);
 
     return (rc == 0) ? 0 : EXIT_FAILURE;
 }
