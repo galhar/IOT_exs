@@ -4,7 +4,9 @@
 
 #ifndef EX1_MQTTCLIENT_H
 #define EX1_MQTTCLIENT_H
-#define "wolfmqtt/mqttexample.h"
+#include "relevantExamples/mqttexample.h"
+#include "wolfmqtt/mqtt_types.h"
+#include "wolfmqtt/mqtt_socket.h"
 /**
  * Initializes the MqttNet struct with the previously defined callbacks (NetConnect, NetRead, NetWrite, NetDisconnect)
  * and allocates (if needed) structs, buffers, static variables etc.
