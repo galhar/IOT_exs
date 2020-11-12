@@ -36,7 +36,6 @@ extern "C" {
 #endif
 
 
-#endif /* WOLFMQTT_OPTIONS_H */
 #ifdef __cplusplus
 extern "C" {
 #endif
