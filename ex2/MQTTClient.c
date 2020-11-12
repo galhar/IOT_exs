@@ -14,7 +14,10 @@
  * defined in wolfMQTT/wolfmqtt/mqtt_types.h).
  */
 static int NetConnect(void *context, const char* host, word16 port, int timeout_ms) {
-
+    char bufferPort[16];
+    snprintf(bufferPort, 16, "%d", port);
+    SocketInit(host, bufferPort);
+    SocketConnect();
 }
 
 /**
