@@ -2,14 +2,43 @@ Gal Harari,      ID 208296822,  gal.harari40@gmail.com
 Amit Dovner, ID  211760863, amit.dovner40@gmail.com
 ===============================================================================
 
-                           Project 2 - MQTT is messed up
-                           --------------------------------------------------------
+                           Project 2 - MQTT learned from github
+                           -------------------------------------------------------------
   
 
 Submitted Files
 -------------------------
 README - This file
 
+Files from the wolfmqtt:
+	wolfmqtt/mqtt_client.c
+	wolfmqtt/mqtt_client.h
+	wolfmqtt/mqtt_packet.c
+	wolfmqtt/mqtt_packet.h
+	wolfmqtt/mqtt_socket.c
+	wolfmqtt/mqtt_socket.h
+	wolfmqtt/mqtt_types.h
+	wolfmqtt/options.h
+	wolfmqtt/visibility.h
+
+
+Files written by us:
+	main.c - A program that usses MQTT protocol and does a simple task - it initiates an 
+		internet  connection with a hard-coded broker, connect to it, sends it a PUBLISH
+		request with our information, and disconnects. It prints the progress.
+
+	MQTTClient.c - Implements a simple MQTTClient implementation, that only deals
+		with the mqtt net settings of the code, that relies on the socket library from ex1.
+
+	MQTTClient.h - Header file of a imple MQTTClient implementation, that only deals 
+		with the mqtt net settings of the code, that relies on the socket library from ex1.
+
+	socket.h - Header file of a socket library that allows to connect to a socket, read,
+		write and disconnect.
+
+	socket_linux.- Implementsa socket library that allows to connect to a socket, read,
+		write and disconnect.
 
 Remarks
 --------------
+Most of our work was to create the main.c and most of the code is there.

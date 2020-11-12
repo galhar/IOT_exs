@@ -13,7 +13,7 @@
 #define DEFAULT_CON_TIMEOUT_MS  5000
 #define DEFAULT_TOPIC_NAME "huji_iot_class/2020_2021"
 #define DEFAULT_CLIENT_ID "galDov"
-#define DEFAULT_MESSAGE "hi there I'm gal and dovner"
+#define ERROR_PREFIX_TEST_FUNC "mqttclient_test ERROR: "
 
 #define MAX_BUFFER_SIZE 100
 #define PRINT_BUFFER_SIZE 100
@@ -48,7 +48,7 @@ int mqtt_init_ctx(MQTTCtx *mqttCtx) {
     mqttCtx->host = DEFAULT_MQTT_HOST;
     mqttCtx->port = DEFAULT_MQTT_PORT;
     mqttCtx->qos = DEFAULT_MQTT_QOS;
-    mqttCtx->clean_session = 1;
+    mqttCtx->clean_session = 0;
     mqttCtx->keep_alive_sec = DEFAULT_KEEP_ALIVE_SEC;
     mqttCtx->client_id = kDefClientId;
     mqttCtx->topic_name = kDefTopicName;
@@ -127,6 +127,7 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     PRINTF("MQTT Net Init: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror(ERROR_PREFIX_TEST_FUNC "MqttClientNet_Init Error");
         goto exit;
     }
 
@@ -144,11 +145,9 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     PRINTF("MQTT Init: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_Init Error");
         goto exit;
     }
-    /* The client.ctx will be stored in the cert callback ctx during
-       MqttSocket_Connect for use by mqtt_tls_verify_cb */
-    mqttCtx->client.ctx = mqttCtx;
 
 
     /* Connect to broker */
@@ -159,6 +158,7 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     PRINTF("MQTT Socket Connect: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_NetConnect Error");
         goto exit;
     }
 
@@ -176,6 +176,7 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
            MqttClient_GetProtocolVersionString(&mqttCtx->client),
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_Connect Error");
         goto disconn;
     }
 
@@ -191,19 +192,10 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     PRINTF("MQTT Connect Ack: Assigned Client ID: %s",
            mqttCtx->client_id);
 
-    /* Build list of topics */
-    XMEMSET(&mqttCtx->subscribe, 0, sizeof(MqttSubscribe));
-
-    i = 0;
-    mqttCtx->topics[i].topic_filter = mqttCtx->topic_name;
-    mqttCtx->topics[i].qos = mqttCtx->qos;
-
 
     /* Publish Topic */
     XMEMSET(&mqttCtx->publish, 0, sizeof(MqttPublish));
-    mqttCtx->publish.retain = 0;
     mqttCtx->publish.qos = mqttCtx->qos;
-    mqttCtx->publish.duplicate = 0;
     mqttCtx->publish.topic_name = mqttCtx->topic_name;
     mqttCtx->publish.packet_id = mqtt_get_packetid();
     mqttCtx->publish.buffer = (byte *) mqttCtx->message;
@@ -216,6 +208,7 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
            mqttCtx->publish.topic_name,
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_Publish Error");
         goto disconn;
     }
 
@@ -228,6 +221,7 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     PRINTF("MQTT Disconnect: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror(ERROR_PREFIX_TEST_FUNC "NQTTClient_Disconnect_ex Error");
         goto disconn;
     }
 
@@ -252,18 +246,17 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
 
 
 int main(int argc, char *argv[]) {
-    MqttNet mqttNet;
     int rc;
     MQTTCtx mqttCtx;
 
     /* init defaults */
     rc = mqtt_init_ctx(&mqttCtx);
     if (rc != MQTT_CODE_SUCCESS) {
+        perror("Main ERROR: mqtt_init_ctx error");
         goto exit;
     }
 
     mqttCtx.app_name = "mqttclient";
-    //mqttCtx.message = DEFAULT_MESSAGE;
 
     rc = mqttclient_test(&mqttCtx);
 
