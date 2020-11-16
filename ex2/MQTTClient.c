@@ -6,7 +6,7 @@
 
 /**
  * Connects the socket to the broker, to the given host and port.
- * @param context ??
+ * @param context
  * @param host defines host to connect
  * @param port defines port to connect
  * @param timeout_ms defines the timeout in milliseconds.
@@ -22,7 +22,7 @@ static int NetConnect(void *context, const char* host, word16 port, int timeout_
 
 /**
  * Performs a network (socket) read from the connected broker, to the given buffer buf, and reads buf_len bytes.
- * @param context ??
+ * @param context
  * @param buf buffer to write the data
  * @param buf_len number of bytes to read
  * @param timeout_ms defines the timeout in milliseconds.
@@ -36,7 +36,7 @@ static int NetRead(void *context, byte* buf, int buf_len, int timeout_ms)
 
 /**
  * Performs a network (socket) write to the connected broker, from the given buffer buf, with size of buf_len.
- * @param context ??
+ * @param context
  * @param buf buffer to write from
  * @param buf_len size in bytes to write
  * @param timeout_ms defines the timeout in milliseconds
@@ -49,7 +49,7 @@ static int NetWrite(void *context, const byte* buf, int buf_len, int timeout_ms)
 
 /**
  * Closes the network (socket) connection to the connected broker
- * @param context ??
+ * @param context
  * @return number of sent bytes on success, and a negative number otherwise (one of MqttPacketResponseCodes,
  * defined in wolfMQTT/wolfmqtt/mqtt_types.h).
  */
