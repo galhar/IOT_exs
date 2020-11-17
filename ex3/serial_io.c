@@ -8,13 +8,13 @@ int fd;
 
 int SerialInit(char* port, unsigned int baud) {
     struct termios SerialPortSettings;
-    if((fd = open("/dev/ttyUSB0",O_RDWR | O_NOCTTY)) == ERROR) {
+    if((fd = open(port,O_RDWR | O_NOCTTY)) == ERROR) {
         perror("Error! can not open serial port");
         return ERROR;
     }
     tcgetattr(fd, &SerialPortSettings);
-    cfsetispeed(&SerialPortSettings,B115200);
-    cfsetospeed(&SerialPortSettings,B115200);
+    cfsetispeed(&SerialPortSettings,baud);
+    cfsetospeed(&SerialPortSettings,baud);
     SerialPortSettings.c_cflag &= ~PARENB;   // No Parity
     SerialPortSettings.c_cflag &= ~CSTOPB; //Stop bits = 1
     SerialPortSettings.c_cflag &= ~CSIZE; /* Clears the Mask       */
@@ -33,10 +33,9 @@ int SerialInit(char* port, unsigned int baud) {
 int SerialRecv(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms) {
     struct termios SerialPortSettings;
     tcgetattr(fd, &SerialPortSettings);
-    SerialPortSettings.c_cflag |= CREAD | CLOCAL;//enable receiver
     SerialPortSettings.c_cc[VTIME] = timeout_ms;  /* Wait indefinitely   */
     tcsetattr(fd,TCSANOW,&SerialPortSettings);
-    return read(fd,&buf,max_len);
+    return read(fd,buf,max_len);
 }
 
 int SerialSend(unsigned char *buf, unsigned int size) {
