@@ -2,6 +2,7 @@
 // Created by osboxes on 11/16/20.
 //
 
+#include <zconf.h>
 #include "serial_io.h"
 
 int fd;
@@ -30,12 +31,33 @@ int SerialInit(char* port, unsigned int baud) {
     return SUCCESS;
 }
 
+
+
+
+
 int SerialRecv(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms) {
+    fd_set set;
     struct termios SerialPortSettings;
+    int rv;
+    struct timeval timeout;
+    timeout.tv_usec =  (timeout_ms % 1000)*1000;
+    timeout.tv_sec = timeout_ms / 1000;
+
     tcgetattr(fd, &SerialPortSettings);
-    SerialPortSettings.c_cc[VTIME] = timeout_ms;  /* Wait indefinitely   */
+    FD_ZERO(&set); /* clear the set */
+    FD_SET(fd, &set); /* add our file descriptor to the set */
     tcsetattr(fd,TCSANOW,&SerialPortSettings);
-    return read(fd,buf,max_len);
+    rv = select(fd + 1, &set, NULL, NULL, &timeout);
+    if(rv == ERROR) {
+        perror("select ERROR\n"); /* an error accured */
+        return ERROR;
+    }
+    else if(rv == SUCCESS) {
+        printf("timeout ERROR\n"); /* a timeout occured */
+        return TIMEOUT;
+    }
+    else
+        return read(fd,buf,max_len);
 }
 
 int SerialSend(unsigned char *buf, unsigned int size) {

@@ -7,6 +7,7 @@
 #include <unistd.h> /* UNIX Standard Definitions         */
 #include <errno.h>  /* ERROR Number Definitions          */
 
+#define TIMEOUT -2
 #define ERROR -1
 #define SUCCESS 0
 
@@ -22,7 +23,7 @@ int SerialInit(char* port, unsigned int baud);
  * @brief Receives data from serial connection.
  * @param buf - the buffer that receives the input.
  * @param max_len - maximum bytes to read into buf (buf must be equal or greater than max_len).
- * @param timeout_ms - read operation timeout milliseconds.
+ * @param timeout_ms - read operation timeout in milliseconds.
  * @return amount of bytes read into buf, -1 on error.
 */
 int SerialRecv(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms);

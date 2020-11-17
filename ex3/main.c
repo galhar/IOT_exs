@@ -2,28 +2,31 @@
 //
 #include "serial_io.h"
 #include <string.h>
-#include "serial_io.h"
 
-#define READ_TIMEOUT_MS 3000
+#define READ_TIMEOUT_MS_SHORT 10000
+#define READ_TIMEOUT_MS_LONG 90000
 #define READ_BUF_SIZE 1000
-#define OK "\nOK"
-
-int sendAndRecv(char *readBuf, const char *command, const char *toGet) {
+#define OK "K\r\n"
+int sendAndRecv(char *readBuf, const char *command, const char *toGet, int timeout) {
     if (command != NULL) {
         printf("%s", command);
         int a = SerialSend(command, strlen(command));
 
         if (a < SUCCESS) {
-            perror("Error in sendAndRecv: SerialSend error");
+            perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
         }
     }
     do {
-        unsigned int a = SerialRecv(readBuf, READ_BUF_SIZE - 1, READ_TIMEOUT_MS);
+        int a = SerialRecv(readBuf, READ_BUF_SIZE - 1, timeout);
 
-        if (a < SUCCESS) {
-            perror("Error in sendAndRecv: SerialRecv error");
+        if (a == ERROR) {
+            perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
+        }
+        if (a == TIMEOUT) {
+            perror("Error in sendAndRecv: SerialRecv TIMEOUT\n");
+            return TIMEOUT;
         }
 
         readBuf[a] = 0;
@@ -42,35 +45,33 @@ int main(int argc, char *argv[]) {
     unsigned char *atcopseqCommand = "AT+COPS=?\r\n";
     unsigned char *atcregCommand = "AT+CREG?\r\n";
     unsigned char *atcopsCommand = "AT+COPS?\r\n";
-    int rc = SUCCESS;
 
 
     if (SerialInit(port, baud) == ERROR) {
-        perror("Error in main: Initializing the serial");
+        perror("Error in main: Initializing the serial\n");
         return ERROR;
     }
 
-    if (sendAndRecv(readBuf, NULL, "+PBREADY") == ERROR) {
+    if (sendAndRecv(readBuf, NULL, "+PBREADY", READ_TIMEOUT_MS_SHORT) == ERROR) {
         return ERROR;
     }
-    if (sendAndRecv(readBuf, atCommand, OK) == ERROR) {
+    if (sendAndRecv(readBuf, atCommand, OK, READ_TIMEOUT_MS_SHORT) == ERROR) {
         return ERROR;
     }
-    if (sendAndRecv(readBuf, atccidCommand, OK) == ERROR) {
+    if (sendAndRecv(readBuf, atccidCommand, OK, READ_TIMEOUT_MS_SHORT) == ERROR) {
         return ERROR;
     }
-    if (sendAndRecv(readBuf, atcopseqCommand, OK) == ERROR) {
+    if (sendAndRecv(readBuf, atcopseqCommand, OK, READ_TIMEOUT_MS_LONG) == ERROR) {
         return ERROR;
     }
-    if (sendAndRecv(readBuf, atcregCommand, OK) == ERROR) {
+    SerialFlushInputBuff();
+    if (sendAndRecv(readBuf, atcregCommand, OK, READ_TIMEOUT_MS_SHORT) == ERROR) {
         return ERROR;
     }
-    if (sendAndRecv(readBuf, atcopsCommand, OK) == ERROR) {
+    if (sendAndRecv(readBuf, atcopsCommand, OK, READ_TIMEOUT_MS_SHORT) == ERROR) {
         return ERROR;
     }
 
     SerialDisable();
-
-
 }
 

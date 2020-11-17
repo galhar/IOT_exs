@@ -2,49 +2,26 @@ Gal Harari,      ID 208296822,  gal.harari40@gmail.com
 Amit Dovner, ID  211760863, amit.dovner40@gmail.com
 ===============================================================================
 
-                           Project 2 - MQTT learned from github
-                           -------------------------------------------------------------
+                           Project 3 - Communicating with the damn modem
+                           ---------------------------------------------------------------------------------
   
 
 Submitted Files
 -------------------------
 README - This file
-
-Files from the wolfmqtt:
-	wolfmqtt/mqtt_client.c
-	wolfmqtt/mqtt_client.h
-	wolfmqtt/mqtt_packet.c
-	wolfmqtt/mqtt_packet.h
-	wolfmqtt/mqtt_socket.c
-	wolfmqtt/mqtt_socket.h
-	wolfmqtt/mqtt_types.h
-	wolfmqtt/options.h
-	wolfmqtt/visibility.h
-
-
-Files written by us:
-	main.c - A program that usses MQTT protocol and does a simple task - it initiates an 
-		internet  connection with a hard-coded broker, connect to it, sends it a PUBLISH
-		request with our information, and disconnects. It prints the progress.
-
-	MQTTClient.c - Implements a simple MQTTClient implementation, that only deals
-		with the mqtt net settings of the code, that relies on the socket library from ex1.
-
-	MQTTClient.h - Header file of a imple MQTTClient implementation, that only deals 
-		with the mqtt net settings of the code, that relies on the socket library from ex1.
-
-	socket.h - Header file of a socket library that allows to connect to a socket, read,
-		write and disconnect.
-
-	socket_linux.- Implementsa socket library that allows to connect to a socket, read,
-		write and disconnect.
+main.c - A file that tests the communication with the modem with simple 
+	commands sent and their answers recieved. Assumes that the modem is 
+	turned on while the program is running. 
+serial_io.h - A header file for functions to work with the modem - send, recieve, 
+	initialize, flushing it's buffer, and disabling the serial port.
+serial_io.c - Implementation file for functions to work with the modem - send, 
+	recieve, initialize, flushing it's buffer, and disabling the serial port.
 
 Remarks
 --------------
-Most of our work was to create the main.c and most of the code is there.
-The host and other features like qos, port, keep alive, cmd timeout,  connection 
-timeout, topic name, clientID.
-The buffer is set to be 100 bytes size.
-The function mqtt_message_cb is there for possible future use. We could set it to
-do nothing and nothing in our actions would have changed. It's in case we will 
-want to subscribe as well.
+There is a function in the main file called sendAndRecive, thats function sending
+a command and waiting for a specific answer from the modem. when this answer 
+arriving its returning and the main function continue.
+We used file descriptor for the serial connection and we using the syscalls read 
+and write to communicate with the modem. to change the settings of the connection 
+we using tcgetattr and tcsetattr functions.
