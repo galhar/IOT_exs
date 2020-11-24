@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
     char charOppCode[MAX_OPP_CODE];
     int opsFound = 0;
     int status = 0;
+    int sqt = 0;
     if(CellularInit(PORT) == ERROR) {
         perror("Error - can not init device");
         return ERROR;
@@ -65,9 +66,13 @@ int main(int argc, char *argv[]) {
         }
     }
 
-
-
-
-
-
+    if(CellularGetSignalQuality(&sqt) == ERROR) {
+        perror("Error - can not get signal squality");
+        return ERROR;
+    }
+    else{
+        sqt = 113 - 2* sqt;
+        printf("Signal quality is %d DB",  sqt);
+    }
+    return SUCCESS;
 }
