@@ -131,10 +131,11 @@ int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
 
 
 int CellularSetOperator(int mode, char *operatorCode) {
-    char* setCommand;
-    asprintf (&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
-    int rc = sendAndRecv()
-    free(setCommand);
+//    char* setCommand;
+//    asprintf (&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
+//    int rc = sendAndRecv(setCommand, OK, LONG_TIMEOUT_MS);
+//
+//    free(setCommand);
     return SUCCESS;
 }
 
