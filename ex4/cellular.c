@@ -129,26 +129,26 @@ int CellularGetRegistrationStatus(int *status) {
 
 
 int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
-
+    return SUCCESS;
 }
 
 
 int CellularSetOperator(int mode, char *operatorCode) {
-
+    return SUCCESS;
 }
 
 
 int CellularGetSignalQuality(int *csq) {
-
+    return SUCCESS;
 }
 
 
 int CellularGetICCID(char *iccid, int maxlen) {
-
+    return SUCCESS;
 }
 
 
 int CellularGetSignalInfo(SIGNAL_INFO *sigInfo) {
-
+    return SUCCESS;
 }
 
