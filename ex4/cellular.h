@@ -15,6 +15,8 @@
 #define SUCCESS 0
 #define BAUD B115200
 
+
+
 typedef struct __OPERATOR_INFO {
     char operatorName[10]; // Long name. See <format> under +COPS.
     int operatorCode; // Short code. See <format> under +COPS.
