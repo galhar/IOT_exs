@@ -4,6 +4,13 @@
 
 #ifndef README_CELLULAR_H
 #define README_CELLULAR_H
+
+#include "serial_io.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_PORT_LEN 16
 #define ERROR -1
 #define SUCCESS 0
 #define BAUD B115200

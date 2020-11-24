@@ -2,21 +2,20 @@
 // Created by osboxes on 11/24/20.
 //
 #include "cellular.h"
-#include "serial_io.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#define MAX_PORT_LEN 16
 char *modemPort;
 
 int CellularInit(char *port) {
     int portLen = strlen(port);
     if (portLen > MAX_PORT_LEN - 1) {
-        perror("Error in CellularInit: port length too big");
+        perror("Error in CellularInit: port length too big\n");
         return ERROR;
     }
     modemPort = malloc(portLen);
+    if( modemPort == NULL){
+        perror("Error in CellularInit: malloc error\n");
+        return ERROR;
+    }
     strcpy(modemPort, port);
 
     return SerialInit(modemPort, BAUD);
@@ -24,6 +23,7 @@ int CellularInit(char *port) {
 
 
 void CellularDisable(void) {
+
 
 }
 
