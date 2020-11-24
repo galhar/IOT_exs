@@ -16,7 +16,6 @@
 #define LONG_TIMEOUT_MS 90000
 
 
-char *modemPort;
 char *readBuf[READ_BUF_SIZE];
 
 int sendAndRecv(const char *command, const char *toGet, int timeout) {
@@ -54,14 +53,8 @@ int CellularInit(char *port) {
         perror("Error in CellularInit: port length too big\n");
         return ERROR;
     }
-    modemPort = malloc(portLen);
-    if (modemPort == NULL) {
-        perror("Error in CellularInit: malloc error\n");
-        return ERROR;
-    }
-    strcpy(modemPort, port);
 
-    if (SerialInit(modemPort, BAUD) == ERROR) {
+    if (SerialInit(port, BAUD) == ERROR) {
         perror("Error in CellularInit: SerialInit error\n");
         return ERROR;
     }
@@ -76,7 +69,6 @@ int CellularInit(char *port) {
 
 
 void CellularDisable(void) {
-    free(modemPort);
     SerialDisable();
 }
 
