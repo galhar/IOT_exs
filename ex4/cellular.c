@@ -4,7 +4,9 @@
 #include "cellular.h"
 
 #define AT_COMMAND "AT\r\n"
-#define CREG_COMMAND "AT+CREG\r\n"
+#define CREG_COMMAND "AT+CREG=?\r\n"
+#define COPS_COMMAND "AT+COPS=?\r\n"
+#define COPS_FORMAT_COMMAND "AT+COPS=%d, %d, \"%s\"\r\n"
 
 #define OK "K\r\n"
 #define REGCOLON "REG:"
@@ -16,7 +18,7 @@
 #define LONG_TIMEOUT_MS 90000
 
 
-char *readBuf[READ_BUF_SIZE];
+char readBuf[READ_BUF_SIZE];
 
 int sendAndRecv(const char *command, const char *toGet, int timeout) {
     if (command != NULL) {
@@ -121,11 +123,18 @@ int CellularGetRegistrationStatus(int *status) {
 
 
 int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
+    int rc = sendAndRecv(COPS_COMMAND, OK, LONG_TIMEOUT_MS);
+
+
     return SUCCESS;
 }
 
 
 int CellularSetOperator(int mode, char *operatorCode) {
+    char* setCommand;
+    asprintf (&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
+    int rc = sendAndRecv()
+    free(setCommand);
     return SUCCESS;
 }
 
