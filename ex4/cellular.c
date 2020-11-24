@@ -12,7 +12,7 @@
 #define REGCOLON "REG:"
 #define CREG_REGSTATUS_LOC 8
 
-#define READ_BUF_SIZE 1000
+#define READ_BUF_SIZE 500
 
 #define SHORT_TIMEOUT_MS 9000
 #define LONG_TIMEOUT_MS 90000
@@ -125,17 +125,26 @@ int CellularGetRegistrationStatus(int *status) {
 int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
     int rc = sendAndRecv(COPS_COMMAND, OK, LONG_TIMEOUT_MS);
 
+    // Now parse out the available operators
+
 
     return SUCCESS;
 }
 
 
 int CellularSetOperator(int mode, char *operatorCode) {
-//    char* setCommand;
-//    asprintf (&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
-//    int rc = sendAndRecv(setCommand, OK, LONG_TIMEOUT_MS);
-//
-//    free(setCommand);
+    char *setCommand;
+    asprintf(&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
+    int rc = sendAndRecv(setCommand, OK, SHORT_TIMEOUT_MS);
+    if (rc == TIMEOUT) {
+        perror("ERROR in CellularSetOperators: got timeout from the modem\n");
+        return ERROR;
+    } else if (rc == ERROR) {
+        perror("ERROR in CellularSetOperators\n");
+        return ERROR;
+    }
+
+    free(setCommand);
     return SUCCESS;
 }
 
