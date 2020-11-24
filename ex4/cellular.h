@@ -1,6 +1,13 @@
 //
 // Created by osboxes on 11/24/20.
 //
+
+#ifndef README_CELLULAR_H
+#define README_CELLULAR_H
+#define ERROR -1
+#define SUCCESS 0
+#define BAUD B115200
+
 typedef struct __OPERATOR_INFO {
     char operatorName[10]; // Long name. See <format> under +COPS.
     int operatorCode; // Short code. See <format> under +COPS.
@@ -13,8 +20,6 @@ typedef struct __SIGNAL_INFO {
     char accessTechnology[4]; // "2G" or "3G"
 } SIGNAL_INFO;
 
-#ifndef README_CELLULAR_H
-#define README_CELLULAR_H
 
 /**
  * Initialize whatever is needed to start working with the cellular modem (e.g. the serial
