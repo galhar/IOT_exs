@@ -11,6 +11,10 @@
 
 #define COPS_FORMAT_COMMAND "AT+COPS=%d,%d,\"%s\"\r\n"
 
+#define SICS_CONNTYPE_COMM "at^sics=0,conType,GPRS0"
+#define SICS_INACT_FORMAT_COMM "AT^SICS=0,\"inactTO\", \"%d\""
+#define SICS_APN_COMM "AT^SICS=0,apn,\"internet.t-d1.de\""
+
 #define OK "K\r\n"
 #define REGCOLON "REG:"
 #define CREG_REGSTATUS_LOC 7
@@ -61,6 +65,24 @@ int sendAndRecv(const char *command, const char *toGet, int timeout) {
     return SUCCESS;
 }
 
+
+int checkSendAndRecieve(int rc, const char *a) {
+    if (rc == TIMEOUT) {
+        perror(a);
+        perror(": timeout from the modem\n");
+        return ERROR;
+    }
+
+    if (rc == ERROR) {
+        perror(a);
+        perror("\n");
+        return ERROR;
+    }
+
+    return SUCCESS;
+}
+
+
 int CellularInit(char *port) {
     int portLen = strlen(port);
     if (portLen > MAX_PORT_LEN - 1) {
@@ -90,17 +112,8 @@ void CellularDisable(void) {
 int CellularCheckModem(void) {
     int rc;
     rc = sendAndRecv(AT_COMMAND, OK, SHORT_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularCheckModem: timeout from the modem");
-        return ERROR;
-    }
 
-    if (rc == ERROR) {
-        perror("ERROR in CellularCheckModem");
-        return ERROR;
-    }
-
-    return SUCCESS;
+    return checkSendAndRecieve(rc, "ERROR in CellularCheckModem");
 
 }
 
@@ -108,14 +121,10 @@ int CellularCheckModem(void) {
 int CellularGetRegistrationStatus(int *status) {
     int rc;
     rc = sendAndRecv(CREG_COMMAND, OK, LONG_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularGetRegistrationStatus: got timeout from the modem\n");
+    if( checkSendAndRecieve(rc, "ERROR in CellularGetRegistrationStatus") == ERROR){
         return ERROR;
     }
-    if (rc == ERROR) {
-        perror("ERROR in CellularGetRegistrationStatus\n");
-        return ERROR;
-    }
+
 
     // Now parse the regstatus out of; +CREG: <Mode>, <regStatus>
     char *regColonPointer;
@@ -136,6 +145,9 @@ int CellularGetRegistrationStatus(int *status) {
 
 int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
     int rc = sendAndRecv(COPS_COMMAND, OK, LONG_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularGetOperator") == ERROR){
+        return ERROR;
+    }
 
     // Now parse out the available operators
     char *operatorData, *nextOpData, *curOpDataEnd;
@@ -190,14 +202,9 @@ int CellularSetOperator(int mode, char *operatorCode) {
     char *setCommand;
     asprintf(&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
     int rc = sendAndRecv(setCommand, OK, SHORT_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularSetOperators: got timeout from the modem\n");
-        return ERROR;
-    } else if (rc == ERROR) {
-        perror("ERROR in CellularSetOperators\n");
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetOperators") == ERROR) {
         return ERROR;
     }
-
     free(setCommand);
     return SUCCESS;
 }
@@ -207,14 +214,11 @@ int CellularGetSignalQuality(int *csq) {
     char csqChar[3];
     int rc;
     rc = sendAndRecv(CSQ_COMMAND, OK, SHORT_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularGetRegistrationStatus: got timeout from the modem\n");
+
+    if( checkSendAndRecieve(rc, "ERROR in CellularGetRegistrationStatus") == ERROR) {
         return ERROR;
     }
-    if (rc == ERROR) {
-        perror("ERROR in CellularGetRegistrationStatus\n");
-        return ERROR;
-    }
+
 
     char *regSCQPointer;
     regSCQPointer = strstr(readBuf, REGSCQ);
@@ -240,14 +244,11 @@ int CellularGetSignalQuality(int *csq) {
 int CellularGetICCID(char *iccid, int maxlen) {
     int rc;
     rc = sendAndRecv(CCID_COMMAND, OK, SHORT_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularGetICCID: got timeout from the modem\n");
+
+    if( checkSendAndRecieve(rc, "ERROR in CellularGetICCID") == ERROR) {
         return ERROR;
     }
-    if (rc == ERROR) {
-        perror("ERROR in CellularGetICCID\n");
-        return ERROR;
-    }
+
     strncpy(iccid, readBuf + 7, maxlen);
     return SUCCESS;
 }
@@ -262,7 +263,26 @@ int CellularGetSignalInfo(SIGNAL_INFO *sigInfo) {
 
 
 int CellularSetupInternetConnectionProfile(int inact_time_sec){
+    int rc;
+    rc = sendAndRecv(SICS_CONNTYPE_COMM, OK, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetConnectionProfile setting the connection type") == ERROR) {
+        return ERROR;
+    }
 
+    char *sicsInactCommand;
+    asprintf(&sicsInactCommand, SICS_INACT_FORMAT_COMM, inact_time_sec);
+    rc = sendAndRecv(sicsInactCommand, OK, SHORT_TIMEOUT_MS);
+    free(sicsInactCommand);
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetConnectionProfile setting the inActivation time") == ERROR) {
+        return ERROR;
+    }
+
+    rc = sendAndRecv(SICS_APN_COMM, OK, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetConnectionProfile setting the connection APN") == ERROR) {
+        return ERROR;
+    }
+
+    return SUCCESS;
 }
 
 
@@ -271,7 +291,7 @@ int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_s
 }
 
 
-int CellularConnect(void);{
+int CellularConnect(void){
 
 }
 
