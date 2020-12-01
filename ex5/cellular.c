@@ -11,11 +11,30 @@
 
 #define COPS_FORMAT_COMMAND "AT+COPS=%d,%d,\"%s\"\r\n"
 
-#define SICS_CONNTYPE_COMM "at^sics=0,conType,GPRS0"
-#define SICS_INACT_FORMAT_COMM "AT^SICS=0,\"inactTO\", \"%d\""
+// Set the internet connection commands
+// 0 is the connection ID
+#define SICS_CONNTYPE_COMM "AT^SICS=0,conType,\"GPRS0\""
+#define SICS_INACT_FORMAT_COMM "AT^SICS=0,inactto,\"%d\""
 #define SICS_APN_COMM "AT^SICS=0,apn,\"internet.t-d1.de\""
 
+// Set the service profile commands
+// 1 is the service ID
+#define SISS_SRVTYPE "AT^SISS=1,\"SrvType\",\"Socket\""
+#define SISS_CONNID "AT^SISS=1,\"conId\",\"0\""
+#define SISS_SOCKTCP_FORMAT "AT^SISS=1,\"address\",\"socktcp://%s:%d;etx;timer=%d\""
+
+// Open the internet session defined by the service profile defined
+#define SISO_COMM "AT^SISO=1"
+
+// Change to transparent mode
+#define SIST_COMM "AT^SIST=1"
+
+// Closes the TCP/IP connection to the remote peer which was opened with AT^SISO
+#define SISC_COMM "AT^SISC=1"
+
 #define OK "K\r\n"
+#define CONNECT "NNECT\r\n"
+
 #define REGCOLON "REG:"
 #define CREG_REGSTATUS_LOC 7
 #define REGSCQ "Q: "
@@ -287,22 +306,60 @@ int CellularSetupInternetConnectionProfile(int inact_time_sec){
 
 
 int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_sec){
+    int rc;
+    rc = sendAndRecv(SISS_SRVTYPE, OK, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetServiceSetupProfile setting the service type") == ERROR) {
+        return ERROR;
+    }
 
+    rc = sendAndRecv(SISS_CONNID, OK, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetServiceSetupProfile setting the connection ID") == ERROR) {
+        return ERROR;
+    }
+
+    char *sissSocktcpCommand;
+    asprintf(&sissSocktcpCommand, SISS_SOCKTCP_FORMAT, IP, port, keepintvl_sec);
+    rc = sendAndRecv(sissSocktcpCommand, OK, SHORT_TIMEOUT_MS);
+    free(sissSocktcpCommand);
+    if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetServiceSetupProfile setting the address") == ERROR) {
+        return ERROR;
+    }
+
+    return SUCCESS;
 }
 
 
 int CellularConnect(void){
+    int rc;
+    rc = sendAndRecv(SISO_COMM, OK, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularConnect open the internet session defined by the service profile") == ERROR) {
+        return ERROR;
+    }
 
+
+    rc = sendAndRecv(SIST_COMM, CONNECT, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularConnect setting the connection APN") == ERROR) {
+        return ERROR;
+    }
+
+    return SUCCESS;
 }
 
 
 int CellularClose(){
+    int rc;
 
+    rc = sendAndRecv(SISC_COMM, OK, SHORT_TIMEOUT_MS);
+    if( checkSendAndRecieve(rc, "ERROR in CellularClose closing the tcp") == ERROR) {
+        return ERROR;
+    }
+
+    return SUCCESS;
 }
 
 
 int CellularWrite(unsigned char *payload, unsigned int len){
-
+    return SerialSend(payload, len);
 }
 
 

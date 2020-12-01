@@ -144,7 +144,7 @@ int CellularSetupInternetConnectionProfile(int inact_time_sec);
  * Initialize an internal service profile (AT^SISS) with keepintvl=keepintvl_sec (the timer) and
  * SrvType=Socket, and conId=<CellularSetupInternetConnectionProfile_id> (if
  * cellularSetupInternetConnectionProfile is already initialized. Return error, -1, otherwise) and
- * Address=socktcp://IP:port;etx;time=keepintvl_sec. Return 0 on success, and -1 on failure.
+ * Address=socktcp://IP:port;etx;timer=keepintvl_sec. Return 0 on success, and -1 on failure.
  * @param IP
  * @param port
  * @param keepintvl_sec
@@ -155,6 +155,9 @@ int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_s
 
 /**
  * Connects to the socket (establishes TCP connection to the pre-defined host and port).
+ *
+ * NOT FROM THE EX DESC: this must come after setup connection proile and then setup service profile. In the service
+ * profile we define the host and port
  * @return Returns 0 on success, -1 on failure.
  */
 int CellularConnect(void);
