@@ -3,48 +3,39 @@
 //
 #include "cellular.h"
 
-#define AT_COMMAND "ATE1\r\n"
-#define CREG_COMMAND "AT+CREG?\r\n"
+#define AT_COMMAND "AT\r\n"
+#define CREG_COMMAND "AT+CREG=?\r\n"
 #define COPS_COMMAND "AT+COPS=?\r\n"
-#define CSQ_COMMAND "AT+CSQ\r\n"
-#define CCID_COMMAND "AT+CCID\r\n"
-
-#define COPS_FORMAT_COMMAND "AT+COPS=%d,%d,\"%s\"\r\n"
+#define COPS_FORMAT_COMMAND "AT+COPS=%d, %d, \"%s\"\r\n"
 
 #define OK "K\r\n"
 #define REGCOLON "REG:"
-#define CREG_REGSTATUS_LOC 7
-#define REGSCQ "Q: "
-#define REGSCQ_LOC 3
+#define CREG_REGSTATUS_LOC 8
+
+#define SECOND_G "2G"
+#define THIRD_G "3G"
 
 #define READ_BUF_SIZE 500
 
 #define SHORT_TIMEOUT_MS 9000
 #define LONG_TIMEOUT_MS 90000
 
-#define SLEEP_TIME 30
-
-#define SECOND_G "2G"
-#define THIRD_G "3G"
 
 char readBuf[READ_BUF_SIZE];
 
 int sendAndRecv(const char *command, const char *toGet, int timeout) {
-    SerialFlushInputBuff();
     if (command != NULL) {
         printf("%s", command);
-        usleep(SLEEP_TIME);
         int a = SerialSend(command, strlen(command));
-        usleep(SLEEP_TIME);
+
         if (a < SUCCESS) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
         }
     }
     do {
-        usleep(SLEEP_TIME);
         int a = SerialRecv(readBuf, READ_BUF_SIZE - 1, timeout);
-        usleep(SLEEP_TIME);
+
         if (a == ERROR) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
@@ -138,10 +129,10 @@ int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
     int rc = sendAndRecv(COPS_COMMAND, OK, LONG_TIMEOUT_MS);
 
     // Now parse out the available operators
+    int opsCounter = 0;
     char *operatorData, *nextOpData, *curOpDataEnd;
-    *numOpsFound = 0;
     operatorData = strchr(readBuf, '(');
-    while (operatorData && *numOpsFound < maxops) {
+    while (operatorData) {
         if (operatorData[1] == ')') {
             // No operator data here
             continue;
@@ -149,38 +140,36 @@ int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
         // Prepare for processing and get next op data
         nextOpData = strchr(operatorData + 1, '(');
         // To allow search from end with strrchr
-        curOpDataEnd = strchr(operatorData + 1, ')');
-        *curOpDataEnd = '\0';
+        curOpDataEnd = strchr(operatorData + 1, '(');
+        curOpDataEnd = '\0';
 
         // Parse out the current operator
-        OPERATOR_INFO *curOpInfo = opList + *numOpsFound;
+        OPERATOR_INFO curOpInfo = opList[opsCounter];
 
         // Parse the name
         char *opNameStart = strchr(operatorData, '"') + 1;
-        char *opNameEnd = strchr(opNameStart, '"');
+        char *opNameEnd = strchr(opNameStart + 1, '"');
         int nameLen = opNameEnd - opNameStart;
         if (nameLen > OPERATOR_NAME_BUF_SIZE - 1) {
             nameLen = OPERATOR_NAME_BUF_SIZE - 1;
         }
-        strncpy((*curOpInfo).operatorName, opNameStart, nameLen);
-        (*curOpInfo).operatorName[nameLen] = '\0';
+        strncpy(curOpInfo.operatorName, opNameStart, nameLen);
+        curOpInfo.operatorName[OPERATOR_NAME_BUF_SIZE - 1] = '\0';
 
         // Parse AcT
         char *opAcT = strrchr(operatorData, '\0') - 1;
-        strncpy((*curOpInfo).accessTechnology, (*opAcT - 48) == 0 ? SECOND_G : THIRD_G, strlen(SECOND_G));
+        strncpy(curOpInfo.accessTechnology, (*opAcT - 48) == 0 ? SECOND_G : THIRD_G, strlen(SECOND_G));
 
         // Parse the code
         char *opCodeEnd = strrchr(operatorData, '"');
-        *opCodeEnd = '\0';
-        char *opCodeStart = strrchr(operatorData, '"') + 1;
-        //int codeLen = opCodeEnd - opCodeStart;
-        (*curOpInfo).operatorCode = atoi(opCodeStart);
+        char *opCodeStart = strrchr(opCodeEnd - 1, '"') + 1;
+        int codeLen = opCodeEnd - opCodeStart;
+        opCodeEnd = '\0';
+        curOpInfo.operatorCode = atoi(opCodeStart);
 
         // Jump to next operator
         operatorData = nextOpData;
-        (*numOpsFound)++;
     }
-
 
     return SUCCESS;
 }
@@ -204,51 +193,11 @@ int CellularSetOperator(int mode, char *operatorCode) {
 
 
 int CellularGetSignalQuality(int *csq) {
-    char csqChar[3];
-    int rc;
-    rc = sendAndRecv(CSQ_COMMAND, OK, SHORT_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularGetRegistrationStatus: got timeout from the modem\n");
-        return ERROR;
-    }
-    if (rc == ERROR) {
-        perror("ERROR in CellularGetRegistrationStatus\n");
-        return ERROR;
-    }
-
-    char *regSCQPointer;
-    regSCQPointer = strstr(readBuf, REGSCQ);
-    if (regSCQPointer == NULL) {
-        perror("ERROR in CellularGetSignalQuality: didn't recieve \"+CSQ: in the response\n");
-        return ERROR;
-    }
-    if(regSCQPointer[5] == ',') {
-        strncpy(csqChar, regSCQPointer + REGSCQ_LOC, 2);
-    }
-    else {
-        strncpy(csqChar, regSCQPointer + REGSCQ_LOC, 1);
-    }
-    *csq = atoi(csqChar);
-    if (*csq == 0) {
-        perror("ERROR in CellularGetSignalQuality: Error parsing the csq\n");
-        return ERROR;
-    }
     return SUCCESS;
 }
 
 
 int CellularGetICCID(char *iccid, int maxlen) {
-    int rc;
-    rc = sendAndRecv(CCID_COMMAND, OK, SHORT_TIMEOUT_MS);
-    if (rc == TIMEOUT) {
-        perror("ERROR in CellularGetICCID: got timeout from the modem\n");
-        return ERROR;
-    }
-    if (rc == ERROR) {
-        perror("ERROR in CellularGetICCID\n");
-        return ERROR;
-    }
-    strncpy(iccid, readBuf + 7, maxlen);
     return SUCCESS;
 }
 
