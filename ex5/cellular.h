@@ -14,11 +14,11 @@
 #define ERROR -1
 #define SUCCESS 0
 #define BAUD B115200
-#define OPERATOR_NAME_BUF_SIZE 10
+#define OPERATOR_NAME_BUF_SIZE 30
 
 
 typedef struct __OPERATOR_INFO {
-    char operatorName[10]; // Long name. See <format> under +COPS.
+    char operatorName[OPERATOR_NAME_BUF_SIZE]; // Long name. See <format> under +COPS.
     int operatorCode; // Short code. See <format> under +COPS.
     char accessTechnology[4]; // "2G" or "3G"
 } OPERATOR_INFO;
@@ -126,5 +126,66 @@ int CellularGetICCID(char *iccid, int maxlen);
  * @return
  */
 int CellularGetSignalInfo(SIGNAL_INFO *sigInfo);
+
+
+//---------------------------- From here on the functions are new to ex5 ----------------------------------------------
+
+
+/**
+ * Initialize an internet connection profile (AT^SICS) with inactTO=inact_time_sec and
+ * conType=GPRS0 and apn="postm2m.lu". Return 0 on success, and -1 on failure.
+ * @param inact_time_sec
+ * @return
+ */
+int CellularSetupInternetConnectionProfile(int inact_time_sec);
+
+
+/**
+ * Initialize an internal service profile (AT^SISS) with keepintvl=keepintvl_sec (the timer) and
+ * SrvType=Socket, and conId=<CellularSetupInternetConnectionProfile_id> (if
+ * cellularSetupInternetConnectionProfile is already initialized. Return error, -1, otherwise) and
+ * Address=socktcp://IP:port;etx;time=keepintvl_sec. Return 0 on success, and -1 on failure.
+ * @param IP
+ * @param port
+ * @param keepintvl_sec
+ * @return
+ */
+int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_sec);
+
+
+/**
+ * Connects to the socket (establishes TCP connection to the pre-defined host and port).
+ * @return Returns 0 on success, -1 on failure.
+ */
+int CellularConnect(void);
+
+
+/**
+ * Closes the established connection.
+ * @return Returns 0 on success, -1 on failure.
+ */
+int CellularClose();
+
+
+/**
+ * Writes len bytes from payload buffer to the established connection.
+ * Returns the number of bytes written on success, -1 on failure.
+ * @param payload
+ * @param len
+ * @return
+ */
+int CellularWrite(unsigned char *payload, unsigned int len);
+
+
+/**
+ * Reads up to max_len bytes from the established connection to the provided buf buffer, for up to timeout_ms (doesn’t
+ * block longer than that, even if not all max_len bytes were received).
+ * @param buf
+ * @param max_len
+ * @param timeout_ms
+ * @return
+ */
+int CellularRead(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms);
+
 
 #endif //README_CELLULAR_H
