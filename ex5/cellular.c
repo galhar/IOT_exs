@@ -39,6 +39,9 @@
 #define CREG_REGSTATUS_LOC 7
 #define REGSCQ "Q: "
 #define REGSCQ_LOC 3
+#define NOCARRIER "\r\nNO CARRIER\r\n"
+
+
 
 #define READ_BUF_SIZE 500
 
@@ -364,6 +367,25 @@ int CellularWrite(unsigned char *payload, unsigned int len){
 
 
 int CellularRead(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms){
+    unsigned int readCount = 0;
+    while( readCount < max_len ){
+        unsigned int iterReadCount = 0;
+        unsigned int toRead = max_len - readCount;
 
+        iterReadCount = SerialRecv(buf + readCount, toRead, SHORT_TIMEOUT_MS);
+        if( checkSendAndRecieve(iterReadCount, "ERROR in CellularRead reading from the socket") == ERROR){
+            return ERROR;
+        }
+
+        readCount += iterReadCount;
+
+        char *endRecv;
+        endRecv = strstr(buf, NOCARRIER);
+        if( endRecv != NULL){
+            (*endRecv) = '\0';
+            return readCount - strlen(NOCARRIER);
+        }
+    }
+    return readCount;
 }
 
