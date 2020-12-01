@@ -9,7 +9,14 @@ Amit Dovner, ID  211760863, amit.dovner40@gmail.com
 Submitted Files
 -------------------------
 README - This file
-main.c - 
+main.c - The main file of the program. contains the main functin. searching for cellular operators in the env
+and selecting the best one, connect to it and giving details on the noise.
+cellular.h - A header file for functions to work with cellular over the modem.
+serial_io.c - Implementation file for functions to work with cellular over the modem
+
+
 
 Remarks
 --------------
+We parsed the inputs we got from the modem in several ways, in most of the times we used strstr to find
+substring and then serch for the information from it.

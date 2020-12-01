@@ -14,11 +14,11 @@
 #define ERROR -1
 #define SUCCESS 0
 #define BAUD B115200
-
+#define OPERATOR_NAME_BUF_SIZE 30
 
 
 typedef struct __OPERATOR_INFO {
-    char operatorName[10]; // Long name. See <format> under +COPS.
+    char operatorName[OPERATOR_NAME_BUF_SIZE]; // Long name. See <format> under +COPS.
     int operatorCode; // Short code. See <format> under +COPS.
     char accessTechnology[4]; // "2G" or "3G"
 } OPERATOR_INFO;
