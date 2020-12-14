@@ -6,8 +6,11 @@
 #define IOT_EXS_SOCKET_H
 #define ERROR -1
 #define SUCCESS 0
+#define MAX_ICCID 30
+#define MAX_OPP_LIST 30
+#define MAX_OPP_CODE 10
 
-#include <sys/socket.h>
+#include "cellular.h"
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>

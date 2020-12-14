@@ -14,6 +14,7 @@
 #define ERROR -1
 #define SUCCESS 0
 #define BAUD B115200
+#define PORT "/dev/ttyS0"
 #define OPERATOR_NAME_BUF_SIZE 30
 
 

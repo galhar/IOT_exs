@@ -38,7 +38,7 @@ int SerialInit(char* port, unsigned int baud) {
 int SerialRecv(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms) {
     fd_set set;
     struct termios SerialPortSettings;
-    int rv;
+    int rv = 1;
     struct timeval timeout;
     timeout.tv_usec =  (timeout_ms % 1000)*1000;
     timeout.tv_sec = timeout_ms / 1000;
@@ -47,7 +47,7 @@ int SerialRecv(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms
     FD_ZERO(&set); /* clear the set */
     FD_SET(fd, &set); /* add our file descriptor to the set */
     tcsetattr(fd,TCSANOW,&SerialPortSettings);
-    rv = select(fd + 1, &set, NULL, NULL, &timeout);
+    //rv = select(fd + 1, &set, NULL, NULL, &timeout);
     if(rv == ERROR) {
         perror("select ERROR\n"); /* an error accured */
         return ERROR;

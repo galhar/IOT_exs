@@ -9,7 +9,18 @@ Amit Dovner, ID  211760863, amit.dovner40@gmail.com
 Submitted Files
 -------------------------
 README - This file
-main.c - 
+main.c - The main file of the program. contains the main functin. searching for cellular operators in the env
+and selecting the best one, connect to it and giving details on the noise.
+cellular.h - A header file for functions to work with cellular over the modem.
+cellular.c - Implementation file for functions to work with cellular over the modem
+socket.h - A header file for functions to work with sockets.
+socket_linux_modem.c - Implementation file for functions to work with sockets
+HTTP_client.h - A header file for functions to work with HTTP client.
+HTTP_client.c - Implementation file for functions to work with HTTP client
+serial_io.h - A header file for functions to work with serial commands.
+serial_io_linux.c - Implementation file for functions to work with serial commands
+
 
 Remarks
 --------------
+The code is statistical and working only in part of the runnings of the program.

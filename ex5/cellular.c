@@ -13,25 +13,26 @@
 
 // Set the internet connection commands
 // 0 is the connection ID
-#define SICS_CONNTYPE_COMM "AT^SICS=0,conType,\"GPRS0\""
-#define SICS_INACT_FORMAT_COMM "AT^SICS=0,inactto,\"%d\""
-#define SICS_APN_COMM "AT^SICS=0,apn,\"internet.t-d1.de\""
-
+#define SICS_CONNTYPE_COMM "AT^SICS=0,conType,\"GPRS0\"\r\n"
+#define SICS_INACT_FORMAT_COMM "AT^SICS=0,inactTO,\"%d\"\r\n"
+//#define SICS_APN_COMM "AT^SICS=0,apn,\"postm2m.lu\"\r\n"
+#define SICS_APN_COMM "AT\r\n"
 // Set the service profile commands
 // 1 is the service ID
-#define SISS_SRVTYPE "AT^SISS=1,\"SrvType\",\"Socket\""
-#define SISS_CONNID "AT^SISS=1,\"conId\",\"0\""
-#define SISS_SOCKTCP_FORMAT "AT^SISS=1,\"address\",\"socktcp://%s:%d;etx;timer=%d\""
+#define SISS_SRVTYPE "AT^SISS=1,\"SrvType\",\"Socket\"\r\n"
+#define SISS_CONNID "AT^SISS=1,\"conId\",\"0\"\r\n"
+#define SISS_SOCKTCP_FORMAT "AT^SISS=1,\"address\",\"socktcp://%u.%u.%u.%u:%d;etx;timer=%d\"\r\n"
 
 // Open the internet session defined by the service profile defined
-#define SISO_COMM "AT^SISO=1"
+#define SISO_COMM "AT^SISO=1\r\n"
 
 // Change to transparent mode
-#define SIST_COMM "AT^SIST=1"
+#define SIST_COMM "AT^SIST=1\r\n"
 
 // Closes the TCP/IP connection to the remote peer which was opened with AT^SISO
-#define SISC_COMM "AT^SISC=1"
+#define SISC_COMM "AT^SISC=1\r\n"
 
+#define SISW_COMM "AT^SISW=1,%d\r\n"
 #define OK "K\r\n"
 #define CONNECT "NNECT\r\n"
 
@@ -48,7 +49,7 @@
 #define SHORT_TIMEOUT_MS 9000
 #define LONG_TIMEOUT_MS 90000
 
-#define SLEEP_TIME 30
+#define SLEEP_TIME 1000000
 
 #define SECOND_G "2G"
 #define THIRD_G "3G"
@@ -56,12 +57,11 @@
 char readBuf[READ_BUF_SIZE];
 
 int sendAndRecv(const char *command, const char *toGet, int timeout) {
-    SerialFlushInputBuff();
     if (command != NULL) {
         printf("%s", command);
-        usleep(SLEEP_TIME);
+        //usleep(SLEEP_TIME);
         int a = SerialSend(command, strlen(command));
-        usleep(SLEEP_TIME);
+        //usleep(SLEEP_TIME);
         if (a < SUCCESS) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
@@ -82,8 +82,10 @@ int sendAndRecv(const char *command, const char *toGet, int timeout) {
 
         readBuf[a] = 0;
         printf("%s", readBuf);
-    } while (strstr(readBuf, toGet) == NULL);
-    SerialFlushInputBuff();
+    } while (strstr(readBuf, toGet) == NULL && strstr(readBuf, "OR") == NULL);
+    if(strstr(readBuf, "OR") != NULL) {
+        return ERROR;
+    }
     return SUCCESS;
 }
 
@@ -321,7 +323,7 @@ int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_s
     }
 
     char *sissSocktcpCommand;
-    asprintf(&sissSocktcpCommand, SISS_SOCKTCP_FORMAT, IP, port, keepintvl_sec);
+    asprintf(&sissSocktcpCommand, SISS_SOCKTCP_FORMAT, IP[0], IP[1], IP[2], IP[3], port, keepintvl_sec);
     rc = sendAndRecv(sissSocktcpCommand, OK, SHORT_TIMEOUT_MS);
     free(sissSocktcpCommand);
     if( checkSendAndRecieve(rc, "ERROR in CellularSetupInternetServiceSetupProfile setting the address") == ERROR) {
@@ -334,11 +336,11 @@ int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_s
 
 int CellularConnect(void){
     int rc;
-    rc = sendAndRecv(SISO_COMM, OK, SHORT_TIMEOUT_MS);
+    sleep(5);
+    rc = sendAndRecv(SISO_COMM, "ISW: 1,1\r\n", SHORT_TIMEOUT_MS);
     if( checkSendAndRecieve(rc, "ERROR in CellularConnect open the internet session defined by the service profile") == ERROR) {
         return ERROR;
     }
-
 
     rc = sendAndRecv(SIST_COMM, CONNECT, SHORT_TIMEOUT_MS);
     if( checkSendAndRecieve(rc, "ERROR in CellularConnect setting the connection APN") == ERROR) {
