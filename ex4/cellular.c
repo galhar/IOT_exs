@@ -12,8 +12,8 @@
 #define COPS_FORMAT_COMMAND "AT+COPS=%d,%d,\"%s\"\r\n"
 
 #define OK "K\r\n"
-#define REGCOLON "REG:"
-#define CREG_REGSTATUS_LOC 7
+#define REGCOLON "G:"
+#define CREG_REGSTATUS_LOC 5
 #define REGSCQ "Q: "
 #define REGSCQ_LOC 3
 
@@ -22,7 +22,7 @@
 #define SHORT_TIMEOUT_MS 9000
 #define LONG_TIMEOUT_MS 90000
 
-#define SLEEP_TIME 30
+#define SLEEP_TIME 1000
 
 #define SECOND_G "2G"
 #define THIRD_G "3G"
@@ -31,20 +31,26 @@ char readBuf[READ_BUF_SIZE];
 
 int sendAndRecv(const char *command, const char *toGet, int timeout) {
     SerialFlushInputBuff();
+    int a = 0;
     if (command != NULL) {
         printf("%s", command);
         usleep(SLEEP_TIME);
-        int a = SerialSend(command, strlen(command));
+        a = SerialSend(command, strlen(command));
         usleep(SLEEP_TIME);
         if (a < SUCCESS) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
         }
     }
+    a = 0;
+    int ret = 0;
     do {
         usleep(SLEEP_TIME);
-        int a = SerialRecv(readBuf, READ_BUF_SIZE - 1, timeout);
-        usleep(SLEEP_TIME);
+        ret = SerialRecv(readBuf + a, READ_BUF_SIZE - 1 - a, timeout);
+        if(readBuf[a] != 0) {
+            a += ret;
+        }
+        //usleep(SLEEP_TIME);
         if (a == ERROR) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
@@ -55,8 +61,25 @@ int sendAndRecv(const char *command, const char *toGet, int timeout) {
         }
 
         readBuf[a] = 0;
-        printf("%s", readBuf);
+        if(strstr(readBuf, "ROR\r\n") != NULL) {
+            if(strstr("\0\r\n", readBuf)) {
+                printf("%s", readBuf+3);
+
+            }
+            else {
+                printf("%s", readBuf);
+            }
+            return ERROR;
+        }
     } while (strstr(readBuf, toGet) == NULL);
+    if(strstr("\0\r\n", readBuf)) {
+        printf("%s", readBuf+3);
+
+    }
+    else {
+        printf("%s", readBuf);
+    }
+
     SerialFlushInputBuff();
     return SUCCESS;
 }
@@ -189,6 +212,7 @@ int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
 int CellularSetOperator(int mode, char *operatorCode) {
     char *setCommand;
     asprintf(&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
+    sleep(5);
     int rc = sendAndRecv(setCommand, OK, SHORT_TIMEOUT_MS);
     if (rc == TIMEOUT) {
         perror("ERROR in CellularSetOperators: got timeout from the modem\n");
@@ -216,9 +240,10 @@ int CellularGetSignalQuality(int *csq) {
         return ERROR;
     }
 
-    char *regSCQPointer;
+    char * regSCQPointer, regOKPointer;
     regSCQPointer = strstr(readBuf, REGSCQ);
-    if (regSCQPointer == NULL) {
+    regOKPointer = strstr(readBuf, OK);
+    if (regSCQPointer == NULL && regOKPointer == NULL) {
         perror("ERROR in CellularGetSignalQuality: didn't recieve \"+CSQ: in the response\n");
         return ERROR;
     }

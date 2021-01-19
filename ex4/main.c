@@ -55,6 +55,11 @@ int main(int argc, char *argv[]) {
         sprintf(charOppCode, "%d", oplist[i].operatorCode);
         if(CellularSetOperator(1, charOppCode) == ERROR ) {
             perror("Error - set operator failed\n");
+            if(i == opsFound - 1) {
+                perror("Can not connect to any operator!\n");
+                return ERROR;
+            }
+
             continue;
 
         }
@@ -69,10 +74,6 @@ int main(int argc, char *argv[]) {
         else {
             printf("Failed to connect to specific operator\n");
         }
-        if(i == opsFound - 1) {
-            perror("Can not connect to any operator!\n");
-            return ERROR;
-        }
     }
 
     if(CellularGetSignalQuality(&sqt) == ERROR) {
@@ -81,7 +82,7 @@ int main(int argc, char *argv[]) {
     }
     else{
         sqt = 113 - 2* sqt;
-        printf("Signal quality is -%d DB\n",  sqt);
+        printf("Signal quality is -%d DBm\n",  sqt);
     }
     return SUCCESS;
 }
