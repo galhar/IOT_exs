@@ -163,8 +163,6 @@ typedef struct _MQTTCtx {
 
 
 void mqtt_show_usage(MQTTCtx* mqttCtx);
-void mqtt_init_ctx(MQTTCtx* mqttCtx);
-void mqtt_free_ctx(MQTTCtx* mqttCtx);
 int mqtt_parse_args(MQTTCtx* mqttCtx, int argc, char** argv);
 int err_sys(const char* msg);
 
