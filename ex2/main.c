@@ -4,8 +4,7 @@
 #include "MQTTClient.h"
 #include <time.h>
 #include <stdio.h>
-
-#define DEFAULT_MQTT_HOST "broker.mqttdashboard.com"
+#define DEFAULT_MQTT_HOST "35.156.182.231"
 #define DEFAULT_MQTT_PORT 1883
 #define DEFAULT_MQTT_QOS 1
 #define DEFAULT_KEEP_ALIVE_SEC 60
@@ -18,11 +17,22 @@
 #define MAX_BUFFER_SIZE 100
 #define PRINT_BUFFER_SIZE 100
 
-char *payloadTemplate = "{\n\"Student1ID\":\"208296822\",\n"
-                              "\"Student2ID\":\"211760863\",\n"
-                              "\"Student1Name\":\"Gal Harari\",\n"
-                              "\"Student2Name\":\"Amit Dovner\",\n"
-                              "\"CurrentTimeUTC\":%ld\n}";
+#define MAX_ICCID 30
+#define MAX_OPP_CODE 4
+#define MAX_OPP_NAME 30
+
+char iccid[MAX_ICCID];
+char charOppCode[MAX_OPP_CODE];
+char charOppName[MAX_OPP_NAME];
+char charOppTech[4];
+int csq;
+
+char *payloadTemplate = "{\n\"ICCID\":\"%s\",\n"
+                        "\"OperatorName\":\"%s\",\n"
+                        "\"OperatorCode\":\"%s\",\n"
+                        "\"Technology\":\"%s\",\n"
+                        "\"Signal\":%d,\n"
+                        "\"Clicks\":%d\n}";
 
 static const char *kDefTopicName = DEFAULT_TOPIC_NAME;
 static const char *kDefClientId = DEFAULT_CLIENT_ID;
@@ -54,14 +64,23 @@ int mqtt_init_ctx(MQTTCtx *mqttCtx) {
     mqttCtx->topic_name = kDefTopicName;
     mqttCtx->cmd_timeout_ms = DEFAULT_CMD_TIMEOUT_MS;
 
+    return MQTT_CODE_SUCCESS;
+}
+
+int definePayload(MQTTCtx *mqttCtx){
+    (*iccid) = 'i';
+    (*charOppCode) = 'c';
+    (*charOppName) = 'n';
+    (*charOppTech) = 't';
+    csq = 125;
+
     char* messagePayload;
-    if(0 > asprintf(&messagePayload, payloadTemplate, time(NULL))){
-        perror("mqtt_init_ctx ERROR: during initializing of the payload message");
+    if(0 > asprintf(&messagePayload, payloadTemplate, iccid, charOppCode, charOppName, charOppTech, csq, 3)){
+        printf("mqtt_init_ctx ERROR: during initializing of the payload message");
         return EXIT_FAILURE;
     }
     mqttCtx->message = messagePayload;
-
-    return MQTT_CODE_SUCCESS;
+    return SUCCESS;
 }
 
 void mqtt_free_ctx(MQTTCtx* mqttCtx)
@@ -93,7 +112,7 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
         buf[len] = '\0'; /* Make sure its null terminated */
 
         /* Print incoming message */
-        PRINTF("MQTT Message: Topic %s, Qos %d, Len %u",
+        printf("MQTT Message: Topic %s, Qos %d, Len %u",
                buf, msg->qos, msg->total_len);
 
     }
@@ -105,11 +124,11 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
     }
     XMEMCPY(buf, msg->buffer, len);
     buf[len] = '\0'; /* Make sure its null terminated */
-    PRINTF("Payload (%d - %d): %s",
+    printf("Payload (%d - %d): %s",
            msg->buffer_pos, msg->buffer_pos + len, buf);
 
     if (msg_done) {
-        PRINTF("MQTT Message: Done");
+        printf("MQTT Message: Done");
     }
 
     /* Return negative to terminate publish processing */
@@ -119,15 +138,15 @@ static int mqtt_message_cb(MqttClient *client, MqttMessage *msg,
 int mqttclient_test(MQTTCtx *mqttCtx) {
     int rc = MQTT_CODE_SUCCESS, i;
 
-    PRINTF("MQTT Client: QoS %d, Use TLS %d", mqttCtx->qos,
+    printf("MQTT Client: QoS %d, Use TLS %d", mqttCtx->qos,
            mqttCtx->use_tls);
 
     /* Initialize Network */
     rc = MqttClientNet_Init(&mqttCtx->net, mqttCtx);
-    PRINTF("MQTT Net Init: %s (%d)",
+    printf("MQTT Net Init: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
-        perror(ERROR_PREFIX_TEST_FUNC "MqttClientNet_Init Error");
+        printf(ERROR_PREFIX_TEST_FUNC "MqttClientNet_Init Error");
         goto exit;
     }
 
@@ -142,10 +161,10 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
                          mqttCtx->rx_buf, MAX_BUFFER_SIZE,
                          mqttCtx->cmd_timeout_ms);
 
-    PRINTF("MQTT Init: %s (%d)",
+    printf("MQTT Init: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
-        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_Init Error");
+        printf(ERROR_PREFIX_TEST_FUNC "MqttClient_Init Error");
         goto exit;
     }
 
@@ -155,10 +174,10 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
                                mqttCtx->port,
                                DEFAULT_CON_TIMEOUT_MS, mqttCtx->use_tls, mqtt_tls_cb);
 
-    PRINTF("MQTT Socket Connect: %s (%d)",
+    printf("MQTT Socket Connect: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
-        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_NetConnect Error");
+        printf(ERROR_PREFIX_TEST_FUNC "MqttClient_NetConnect Error");
         goto exit;
     }
 
@@ -172,16 +191,17 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     /* Send Connect and wait for Connect Ack */
     rc = MqttClient_Connect(&mqttCtx->client, &mqttCtx->connect);
 
-    PRINTF("MQTT Connect: Proto (%s), %s (%d)",
+    printf("MQTT Connect: Proto (%s), %s (%d)",
            MqttClient_GetProtocolVersionString(&mqttCtx->client),
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
-        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_Connect Error");
-        goto disconn;
+        printf(ERROR_PREFIX_TEST_FUNC "MqttClient_Connect Error");
+        //goto disconn;
+        goto exit;
     }
 
     /* Validate Connect Ack info */
-    PRINTF("MQTT Connect Ack: Return Code %u, Session Present %d",
+    printf("MQTT Connect Ack: Return Code %u, Session Present %d",
            mqttCtx->connect.ack.return_code,
            (mqttCtx->connect.ack.flags &
             MQTT_CONNECT_ACK_FLAG_SESSION_PRESENT) ?
@@ -189,9 +209,10 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     );
 
     /* Print the acquired client ID */
-    PRINTF("MQTT Connect Ack: Assigned Client ID: %s",
+    printf("MQTT Connect Ack: Assigned Client ID: %s",
            mqttCtx->client_id);
 
+    definePayload(mqttCtx);
 
     /* Publish Topic */
     XMEMSET(&mqttCtx->publish, 0, sizeof(MqttPublish));
@@ -204,12 +225,13 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
 
     rc = MqttClient_Publish(&mqttCtx->client, &mqttCtx->publish);
 
-    PRINTF("MQTT Publish: Topic %s, %s (%d)",
+    printf("MQTT Publish: Topic %s, %s (%d)",
            mqttCtx->publish.topic_name,
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
-        perror(ERROR_PREFIX_TEST_FUNC "MqttClient_Publish Error");
-        goto disconn;
+        printf(ERROR_PREFIX_TEST_FUNC "MqttClient_Publish Error");
+        //goto disconn;
+        goto exit;
     }
 
 
@@ -218,16 +240,16 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     rc = MqttClient_Disconnect_ex(&mqttCtx->client,
                                   &mqttCtx->disconnect);
 
-    PRINTF("MQTT Disconnect: %s (%d)",
+    printf("MQTT Disconnect: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
     if (rc != MQTT_CODE_SUCCESS) {
-        perror(ERROR_PREFIX_TEST_FUNC "NQTTClient_Disconnect_ex Error");
-        goto disconn;
+        printf(ERROR_PREFIX_TEST_FUNC "NQTTClient_Disconnect_ex Error");
+        //goto disconn;
     }
 
     rc = MqttClient_NetDisconnect(&mqttCtx->client);
 
-    PRINTF("MQTT Socket Disconnect: %s (%d)",
+    printf("MQTT Socket Disconnect: %s (%d)",
            MqttClient_ReturnCodeToString(rc), rc);
 
     exit:
@@ -244,12 +266,32 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
     return rc;
 }
 
-
-int main(int argc, char *argv[]) {
+int publishMqtt(){
     int rc;
     MQTTCtx mqttCtx;
 
-    /* init defaults */
+    // init defaults
+    rc = mqtt_init_ctx(&mqttCtx);
+    if (rc != MQTT_CODE_SUCCESS) {
+        printf("Main ERROR: mqtt_init_ctx error");
+        goto exit;
+    }
+
+    mqttCtx.app_name = "mqttclient";
+
+    rc = mqttclient_test(&mqttCtx);
+
+    exit:
+    mqtt_free_ctx(&mqttCtx);
+
+    return (rc == 0) ? 0 : EXIT_FAILURE;
+}
+
+int main(int argc, char *argv[]) {
+    /*int rc;
+    MQTTCtx mqttCtx;
+
+    // init defaults
     rc = mqtt_init_ctx(&mqttCtx);
     if (rc != MQTT_CODE_SUCCESS) {
         perror("Main ERROR: mqtt_init_ctx error");
@@ -263,5 +305,6 @@ int main(int argc, char *argv[]) {
     exit:
     mqtt_free_ctx(&mqttCtx);
 
-    return (rc == 0) ? 0 : EXIT_FAILURE;
+    return (rc == 0) ? 0 : EXIT_FAILURE;*/
+    return publishMqtt();
 }
