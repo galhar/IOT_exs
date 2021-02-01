@@ -26,7 +26,6 @@
 
 #include "../wolfmqtt/mqtt_client.h"
 #include "mqttexample.h"
-#include "mqttnet.h"
 
 
 /* locals */
@@ -216,23 +215,6 @@ void mqtt_show_usage(MQTTCtx* mqttCtx)
     }
 }
 
-void mqtt_init_ctx(MQTTCtx* mqttCtx)
-{
-    XMEMSET(mqttCtx, 0, sizeof(MQTTCtx));
-    mqttCtx->host = DEFAULT_MQTT_HOST;
-    mqttCtx->qos = DEFAULT_MQTT_QOS;
-    mqttCtx->clean_session = 1;
-    mqttCtx->keep_alive_sec = DEFAULT_KEEP_ALIVE_SEC;
-    mqttCtx->client_id = kDefClientId;
-    mqttCtx->topic_name = kDefTopicName;
-    mqttCtx->cmd_timeout_ms = DEFAULT_CMD_TIMEOUT_MS;
-#ifdef WOLFMQTT_V5
-    mqttCtx->max_packet_size = DEFAULT_MAX_PKT_SZ;
-    mqttCtx->topic_alias = 1;
-    mqttCtx->topic_alias_max = 1;
-#endif
-}
-
 int mqtt_parse_args(MQTTCtx* mqttCtx, int argc, char** argv)
 {
     int rc;
@@ -386,22 +368,6 @@ int mqtt_parse_args(MQTTCtx* mqttCtx, int argc, char** argv)
     return rc;
 }
 
-void mqtt_free_ctx(MQTTCtx* mqttCtx)
-{
-    if (mqttCtx == NULL) {
-        return;
-    }
-
-    if (mqttCtx->dynamicTopic && mqttCtx->topic_name) {
-        WOLFMQTT_FREE((char*)mqttCtx->topic_name);
-        mqttCtx->topic_name = NULL;
-    }
-    if (mqttCtx->dynamicClientId && mqttCtx->client_id) {
-        WOLFMQTT_FREE((char*)mqttCtx->client_id);
-        mqttCtx->client_id = NULL;
-    }
-}
-
 #if defined(__GNUC__) && !defined(NO_EXIT)
     __attribute__ ((noreturn))
 #endif
@@ -414,15 +380,6 @@ int err_sys(const char* msg)
 }
 
 
-word16 mqtt_get_packetid(void)
-{
-    /* Check rollover */
-    if (mPacketIdLast >= MAX_PACKET_ID) {
-        mPacketIdLast = 0;
-    }
-
-    return ++mPacketIdLast;
-}
 
 #ifdef WOLFMQTT_NONBLOCK
     #if defined(MICROCHIP_MPLAB_HARMONY)
@@ -470,110 +427,3 @@ int mqtt_check_timeout(int rc, word32* start_sec, word32 timeout_sec)
 }
 #endif /* WOLFMQTT_NONBLOCK */
 
-
-#ifdef ENABLE_MQTT_TLS
-static int mqtt_tls_verify_cb(int preverify, WOLFSSL_X509_STORE_CTX* store)
-{
-    char buffer[WOLFSSL_MAX_ERROR_SZ];
-    MQTTCtx *mqttCtx = NULL;
-    char appName[PRINT_BUFFER_SIZE] = {0};
-
-    if (store->userCtx != NULL) {
-        /* The client.ctx was stored during MqttSocket_Connect. */
-        mqttCtx = (MQTTCtx *)store->userCtx;
-        XSTRNCPY(appName, " for ", PRINT_BUFFER_SIZE-1);
-        XSTRNCAT(appName, mqttCtx->app_name,
-                PRINT_BUFFER_SIZE-XSTRLEN(appName)-1);
-    }
-
-    PRINTF("MQTT TLS Verify Callback%s: PreVerify %d, Error %d (%s)",
-            appName, preverify,
-            store->error, store->error != 0 ?
-                    wolfSSL_ERR_error_string(store->error, buffer) : "none");
-    PRINTF("  Subject's domain name is %s", store->domain);
-
-    if (store->error != 0) {
-        /* Allowing to continue */
-        /* Should check certificate and return 0 if not okay */
-        PRINTF("  Allowing cert anyways");
-    }
-
-    return 1;
-}
-
-/* Use this callback to setup TLS certificates and verify callbacks */
-int mqtt_tls_cb(MqttClient* client)
-{
-    int rc = WOLFSSL_FAILURE;
-
-    client->tls.ctx = wolfSSL_CTX_new(wolfTLSv1_2_client_method());
-    if (client->tls.ctx) {
-        wolfSSL_CTX_set_verify(client->tls.ctx, WOLFSSL_VERIFY_PEER,
-                mqtt_tls_verify_cb);
-
-        /* default to success */
-        rc = WOLFSSL_SUCCESS;
-
-#if !defined(NO_CERT)
-    #if !defined(NO_FILESYSTEM)
-        if (mTlsCaFile) {
-            /* Load CA certificate file */
-            rc = wolfSSL_CTX_load_verify_locations(client->tls.ctx,
-                mTlsCaFile, NULL);
-            if (rc != WOLFSSL_SUCCESS) {
-                PRINTF("Error loading CA %s: %d (%s)", mTlsCaFile, 
-                    rc, wolfSSL_ERR_reason_error_string(rc));
-                return rc;
-            }
-        }
-        if (mTlsCertFile && mTlsKeyFile) {
-            /* Load If using a mutual authentication */
-            rc = wolfSSL_CTX_use_certificate_file(client->tls.ctx,
-                mTlsCertFile, WOLFSSL_FILETYPE_PEM);
-            if (rc != WOLFSSL_SUCCESS) {
-                PRINTF("Error loading certificate %s: %d (%s)", mTlsCertFile, 
-                    rc, wolfSSL_ERR_reason_error_string(rc));
-                return rc;
-            }
-            rc = wolfSSL_CTX_use_PrivateKey_file(client->tls.ctx,
-                mTlsKeyFile, WOLFSSL_FILETYPE_PEM);
-            if (rc != WOLFSSL_SUCCESS) {
-                PRINTF("Error loading key %s: %d (%s)", mTlsKeyFile, 
-                    rc, wolfSSL_ERR_reason_error_string(rc));
-                return rc;
-            }
-        }
-    #else
-    #if 0
-        /* Examples for loading buffer directly */
-        /* Load CA certificate buffer */
-        rc = wolfSSL_CTX_load_verify_buffer(client->tls.ctx,
-            (const byte*)root_ca, (long)XSTRLEN(root_ca), WOLFSSL_FILETYPE_PEM);
-
-        /* Load Client Cert */
-        if (rc == WOLFSSL_SUCCESS)
-            rc = wolfSSL_CTX_use_certificate_buffer(client->tls.ctx,
-                (const byte*)device_cert, (long)XSTRLEN(device_cert),
-                WOLFSSL_FILETYPE_PEM);
-
-        /* Load Private Key */
-        if (rc == WOLFSSL_SUCCESS)
-            rc = wolfSSL_CTX_use_PrivateKey_buffer(client->tls.ctx,
-                (const byte*)device_priv_key, (long)XSTRLEN(device_priv_key),
-                WOLFSSL_FILETYPE_PEM);
-    #endif
-    #endif /* !NO_FILESYSTEM */
-#endif /* !NO_CERT */
-    }
-
-    PRINTF("MQTT TLS Setup (%d)", rc);
-
-    return rc;
-}
-#else
-int mqtt_tls_cb(MqttClient* client)
-{
-    (void)client;
-    return 0;
-}
-#endif /* ENABLE_MQTT_TLS */
