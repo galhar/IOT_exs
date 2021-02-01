@@ -8,6 +8,7 @@
 #define SUCCESS 0
 #define MAX_ICCID 30
 #define MAX_OPP_LIST 30
+#define PORT "/dev/ttyS1"
 #define MAX_OPP_CODE 10
 
 #include "cellular.h"

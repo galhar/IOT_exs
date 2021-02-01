@@ -13,8 +13,7 @@
 #define MAX_PORT_LEN 16
 #define ERROR -1
 #define SUCCESS 0
-#define BAUD B115200
-#define PORT "/dev/ttyS1"
+#define BAUD 115200
 #define OPERATOR_NAME_BUF_SIZE 30
 
 
@@ -29,6 +28,9 @@ typedef struct __SIGNAL_INFO {
     int EC_n0; // In 3G only. See ^SMONI responses.
     char accessTechnology[4]; // "2G" or "3G"
 } SIGNAL_INFO;
+
+
+int resetModem();
 
 
 /**

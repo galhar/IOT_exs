@@ -81,7 +81,7 @@ int connectToOpp(){
     }
     else{
         sqt = 113 - 2* sqt;
-        printf("Signal quality is -%d DB\n",  sqt);
+        printf("Signal quality is -%d DBm\n",  sqt);
     }
     return SUCCESS;
 }

@@ -247,21 +247,22 @@ int mqttclient_test(MQTTCtx *mqttCtx) {
 
 int main(int argc, char *argv[]) {
     int rc;
-    MQTTCtx mqttCtx;
+    while(1) {
+        MQTTCtx mqttCtx;
 
-    /* init defaults */
-    rc = mqtt_init_ctx(&mqttCtx);
-    if (rc != MQTT_CODE_SUCCESS) {
-        perror("Main ERROR: mqtt_init_ctx error");
-        goto exit;
+        /* init defaults */
+        rc = mqtt_init_ctx(&mqttCtx);
+        if (rc != MQTT_CODE_SUCCESS) {
+            perror("Main ERROR: mqtt_init_ctx error");
+            goto exit;
+        }
+
+        mqttCtx.app_name = "mqttclient";
+
+        rc = mqttclient_test(&mqttCtx);
+
+        exit:
+        mqtt_free_ctx(&mqttCtx);
     }
-
-    mqttCtx.app_name = "mqttclient";
-
-    rc = mqttclient_test(&mqttCtx);
-
-    exit:
-    mqtt_free_ctx(&mqttCtx);
-
     return (rc == 0) ? 0 : EXIT_FAILURE;
 }

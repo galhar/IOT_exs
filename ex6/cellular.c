@@ -2,6 +2,8 @@
 // Created by osboxes on 11/24/20.
 //
 #include "cellular.h"
+//#include "time_delay.h"
+#include "socket.h"
 
 //#define AT_COMMAND "AT+CMEE=2\r\n"
 #define AT_COMMAND "ATE1\r\n"
@@ -44,8 +46,8 @@
 #define NO_CARRIER "NO CARRIER\r\n"
 #define CONNECT "NNECT\r\n"
 
-#define REGCOLON "REG:"
-#define CREG_REGSTATUS_LOC 7
+#define REGCOLON "G:"
+#define CREG_REGSTATUS_LOC 5
 #define REGSCQ "Q: "
 #define REGSCQ_LOC 3
 #define NOCARRIER "\r\nNO CARRIER\r\n"
@@ -57,75 +59,124 @@
 #define SHORT_TIMEOUT_MS 9000
 #define LONG_TIMEOUT_MS 90000
 
-#define SLEEP_TIME 1000000
+#define SLEEP_TIME 1300000
 
 #define SECOND_G "2G"
 #define THIRD_G "3G"
 
+#define RESET_CMD "AT+CFUN=1,1\r\n"
+#define RECIEVE_BUFFER 100
+
 char readBuf[READ_BUF_SIZE];
 
+void recvOverUart(){
+	char recievedContent[RECIEVE_BUFFER];
+	int recvBytes = SerialRecv(recievedContent, RECIEVE_BUFFER - 1, 1000);
+	if(recvBytes <=0){
+		return;
+	}
+	recievedContent[recvBytes]='\0';
+	SerialFlushInputBuff();
+	printf(recievedContent);
+}
+
 int sendAndRecv(const char *command, const char *toGet, int timeout) {
+    SerialFlushInputBuff();
+    int a = 0;
     if (command != NULL) {
         printf("%s", command);
-        //usleep(SLEEP_TIME);
-        int a = SerialSend(command, strlen(command));
-        //usleep(SLEEP_TIME);
+        //Delay(SLEEP_TIME);
+        usleep(SLEEP_TIME);
+        a = SerialSend(command, strlen(command));
+        //Delay(SLEEP_TIME);
+        usleep(SLEEP_TIME);
         if (a < SUCCESS) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
         }
     }
+    a = 0;
+    int ret = 0;
+    /*while(1){
+    	recvOverUart();
+    }*/
     do {
+        //Delay(SLEEP_TIME);
         usleep(SLEEP_TIME);
-        int a = SerialRecv(readBuf, READ_BUF_SIZE - 1, timeout);
+        ret = SerialRecv(readBuf + a, READ_BUF_SIZE - 1 - a, timeout);
+        if(readBuf[a] != 0) {
+        	SerialFlushInputBuff();
+            a += ret;
+        }
+        //Delay(SLEEP_TIME);
         usleep(SLEEP_TIME);
         if (a == ERROR) {
             perror("Error in sendAndRecv: SerialSend error\n");
             return ERROR;
         }
-        if (a == TIMEOUT) {
-            perror("Error in sendAndRecv: SerialRecv TIMEOUT\n");
-            return TIMEOUT;
+        if(ret == 0) {
+        	continue;
         }
 
         readBuf[a] = 0;
-        printf("%s", readBuf);
-    } while (strstr(readBuf, toGet) == NULL && strstr(readBuf, "OR") == NULL);
-    if(strstr(readBuf, "OR") != NULL) {
-        return ERROR;
-    }
+        if(strstr("\0\r\n", readBuf + a - ret)) {
+               printf("%s", readBuf+ a - ret);
+
+           }
+           else {
+               printf("%s", readBuf);
+           }
+        if(strstr(readBuf, "ROR\r\n") != NULL) {
+            if(strstr("\0\r\n", readBuf)) {
+                printf("%s", readBuf+3);
+
+            }
+            else {
+                printf("%s", readBuf);
+            }
+            return ERROR;
+        }
+        if( toGet[0] == '\0'){
+        	printf("Doesn't wait for response");
+        	break;
+        }
+    } while (strstr(readBuf, toGet) == NULL);
+
+    SerialFlushInputBuff();
     return SUCCESS;
 }
 
 
 int checkSendAndRecieve(int rc, const char *a) {
-    if (rc == TIMEOUT) {
-        perror(a);
-        perror(": timeout from the modem\n");
-        return ERROR;
-    }
 
     if (rc == ERROR) {
         perror(a);
-        perror("\n");
         return ERROR;
     }
 
     return SUCCESS;
 }
 
+int resetModem(){
+	if (sendAndRecv(RESET_CMD, OK, SHORT_TIMEOUT_MS) != SUCCESS) {
+		perror("Error reseting the modem");
+		return ERROR;
+	}
+}
+
 
 int CellularInit(char *port) {
-    int portLen = strlen(port);
-    if (portLen > MAX_PORT_LEN - 1) {
-        perror("Error in CellularInit: port length too big\n");
-        return ERROR;
-    }
 
-    if (SerialInit(port, BAUD) == ERROR) {
+	// No port in case of wired connection between modem and embedded
+    if (SerialInit(PORT, BAUD) == ERROR) {
         perror("Error in CellularInit: SerialInit error\n");
         return ERROR;
     }
+
+    SerialSend("AT+CFUN=1,1\r\n", strlen("AT+CFUN=1,1\r\n"));
+    /*while(1){
+    	recvOverUart();
+    }*/
 
     if (sendAndRecv(NULL, "+PBREADY", SHORT_TIMEOUT_MS) != SUCCESS) {
         perror("Error in CellularInit: No +PBREADY recieved\n");
@@ -233,6 +284,8 @@ int CellularGetOperators(OPERATOR_INFO *opList, int maxops, int *numOpsFound) {
 int CellularSetOperator(int mode, char *operatorCode) {
     char *setCommand;
     asprintf(&setCommand, COPS_FORMAT_COMMAND, mode, 2, operatorCode);
+    //Delay(5000);
+    usleep(5000000);
     int rc = sendAndRecv(setCommand, OK, SHORT_TIMEOUT_MS);
     if( checkSendAndRecieve(rc, "ERROR in CellularSetOperators") == ERROR) {
         return ERROR;
@@ -252,9 +305,10 @@ int CellularGetSignalQuality(int *csq) {
     }
 
 
-    char *regSCQPointer;
+    char *regSCQPointer, regOKPointer;
     regSCQPointer = strstr(readBuf, REGSCQ);
-    if (regSCQPointer == NULL) {
+    regOKPointer = strstr(readBuf, OK);
+    if (regSCQPointer == NULL && regOKPointer == NULL) {
         perror("ERROR in CellularGetSignalQuality: didn't recieve \"+CSQ: in the response\n");
         return ERROR;
     }
@@ -344,7 +398,8 @@ int CellularSetupInternetServiceSetupProfile(char *IP, int port, int keepintvl_s
 
 int CellularConnect(void){
     int rc;
-    sleep(5);
+    //Delay(5000);
+    usleep(5000000);
     rc = sendAndRecv(SISO_COMM, "ISW: 1,1\r\n", SHORT_TIMEOUT_MS);
     if( checkSendAndRecieve(rc, "ERROR in CellularConnect open the internet session defined by the service profile") == ERROR) {
         return ERROR;
