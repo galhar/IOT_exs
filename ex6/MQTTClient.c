@@ -15,8 +15,11 @@
  */
 static int NetConnect(void *context, const char* host, word16 port, int timeout_ms) {
     char bufferPort[16];
+    int rc;
     snprintf(bufferPort, 16, "%d", port);
-    SocketInit(host, bufferPort);
+    if( SocketInit(host, bufferPort) == ERROR){
+    	return ERROR;
+    }
     SocketConnect();
 }
 
