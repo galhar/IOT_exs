@@ -135,7 +135,16 @@ int SocketWrite(unsigned char *payload, unsigned int len) {
 
 
 int SocketRead(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms) {
-    return CellularRead(buf, max_len, timeout_ms);
+    int readBytes = CellularRead(buf, max_len, timeout_ms);
+    printf("Read %d bytes:", readBytes);
+    int until = readBytes;
+    if( until > 3 ){
+        until = 3;
+    }
+    for( int i = 0; i < until; i++){
+        printf("%d",buf[i]);
+    }
+    return readBytes;
 }
 
 

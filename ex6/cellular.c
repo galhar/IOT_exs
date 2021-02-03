@@ -444,11 +444,12 @@ int CellularRead(unsigned char *buf, unsigned int max_len, unsigned int timeout_
 
         readCount += iterReadCount;
 
-        char *endRecv;
+        unsigned char *endRecv;
         endRecv = strstr(buf, NOCARRIER);
         if( endRecv != NULL){
             (*endRecv) = '\0';
-            return readCount - strlen(NOCARRIER);
+            SerialFlushInputBuff();
+            return endRecv - buf;
         }
     }
     return readCount;

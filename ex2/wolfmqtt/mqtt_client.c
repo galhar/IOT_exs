@@ -1535,6 +1535,9 @@ int MqttClient_Publish_ex(MqttClient *client, MqttPublish *publish,
                 /* Wait for publish response packet */
                 rc = MqttClient_WaitType(client, &publish->resp, resp_type,
                     publish->packet_id, client->cmd_timeout_ms);
+                int ijij = 1;
+                ijij ++;
+
             #ifdef WOLFMQTT_NONBLOCK
                 if (rc == MQTT_CODE_CONTINUE)
                     break;

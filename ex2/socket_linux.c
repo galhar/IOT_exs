@@ -50,7 +50,12 @@ int SocketRead(unsigned char *buf, unsigned int max_len, unsigned int timeout_ms
     tv.tv_sec = 0;
     tv.tv_usec = timeout_ms * 1000;
     setsockopt(socket_sd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-    return recv(socket_sd, buf, max_len, 0);
+    int readBytes =  recv(socket_sd, buf, max_len, 0);
+    printf("\nRead %d bytes:\n", readBytes);
+    for( int i = 0; i < readBytes; i++){
+        printf("%d\n",buf[i]);
+    }
+    return readBytes;
 }
 
 

@@ -75,7 +75,7 @@ int definePayload(MQTTCtx *mqttCtx){
     csq = 125;
 
     char* messagePayload;
-    if(0 > asprintf(&messagePayload, payloadTemplate, iccid, charOppCode, charOppName, charOppTech, csq, 3)){
+    if(0 > asprintf(&messagePayload, payloadTemplate, iccid, charOppName, charOppCode, charOppTech, csq, 3)){
         printf("mqtt_init_ctx ERROR: during initializing of the payload message");
         return EXIT_FAILURE;
     }
